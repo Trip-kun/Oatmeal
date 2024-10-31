@@ -6,6 +6,8 @@ class Main {
       @JvmStatic
       fun main(args: Array<String>) {
          getJDA()
+         startNotificationThread()
+         loadJDA()
       }
    }
 }

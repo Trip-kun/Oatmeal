@@ -8,6 +8,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.reflections.Reflections
 import tech.trip_kun.sinon.Config
+import tech.trip_kun.sinon.EmergencyNotification
+import tech.trip_kun.sinon.addEmergencyNotification
 import tech.trip_kun.sinon.annotations.ListenerClass
 import tech.trip_kun.sinon.annotations.ListenerConstructor
 import tech.trip_kun.sinon.annotations.ListenerIntents
@@ -29,7 +31,7 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                    val command = constructor.newInstance(jda) as Command
                     commands[command.getName()] = command
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    addEmergencyNotification(EmergencyNotification("Failed to load command: ${it.simpleName}", 10, e.stackTraceToString()))
                 }
             }
         }
@@ -49,6 +51,14 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                 }
             } catch (e: CommandExitException) {
                 event.channel.sendMessage(e.message!!).queue()
+            } catch (e: Exception) {
+                addEmergencyNotification(
+                    EmergencyNotification(
+                        "Command Exception: ${command}",
+                        10,
+                        e.stackTraceToString()
+                    )
+                )
             }
         }
     }
@@ -60,7 +70,15 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                 event.deferReply().queue()
                 commands[command]!!.handler(event)
             } catch (e: CommandExitException) {
-                event.channel.sendMessage(e.message!!).queue()
+                event.hook.sendMessage(e.message!!).queue()
+            } catch (e: Exception) {
+                addEmergencyNotification(
+                    EmergencyNotification(
+                        "Command Exception: ${command}",
+                        10,
+                        e.stackTraceToString()
+                    )
+                )
             }
         }
     }

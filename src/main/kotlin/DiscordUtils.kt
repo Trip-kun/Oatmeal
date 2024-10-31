@@ -19,10 +19,12 @@ fun getJDA(): JDA {
     val jdaBuilder = JDABuilder.createDefault(config.discordToken)
     addListenerIntents(jdaBuilder)
     jda = jdaBuilder.build().awaitReady()
-    addListeners(jda)
     return jda
 }
-
+fun loadJDA() {
+    getJDA()
+    addListeners(jda)
+}
 private fun addListeners(jda: JDA) {
     reflections.getSubTypesOf(EventListener::class.java).filter{it.isAnnotationPresent(ListenerClass::class.java)}.forEach { listener ->
         listener.constructors.filter{it.isAnnotationPresent(ListenerConstructor::class.java)}.forEach { constructor ->

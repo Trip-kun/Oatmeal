@@ -29,6 +29,10 @@ class Config {
     val version: Int = 1
     val discordToken: String = ""
     val prefix: String = "s!"
+    val emergencyNotificationsForAdmins: Boolean = true
+    val emergencyNotificationsForChannels: Boolean = false
+    val admins = mutableListOf<Long>()
+    val channels = mutableListOf<Long>()
     companion object {
         @JvmStatic
         @Transient

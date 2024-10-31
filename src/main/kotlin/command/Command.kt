@@ -1,6 +1,7 @@
 package tech.trip_kun.sinon.command
 
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -377,7 +378,9 @@ abstract class Command {
     abstract fun handler(event: SlashCommandInteractionEvent)
 }
 enum class CommandCategory {
-    ESSENTIAL
+    ESSENTIAL,
+    MODERATION,
+    SETTINGS,
 }
 //*
 // * Adds an option to the slash command data
@@ -426,5 +429,57 @@ private fun addOption(slashCommandData: SlashCommandData, argument: Argument) {
         else -> {
             // Do nothing, this only happens with COMMAND, which is handled first before this loop
         }
+    }
+}
+
+fun requireGuild(event: MessageReceivedEvent) {
+    if (event.isFromGuild) {
+        return
+    }
+    throw CommandExitException("This command must be run in a guild")
+}
+fun requireGuild(event: SlashCommandInteractionEvent) {
+    if (event.guild!=null) {
+        return
+    }
+    throw CommandExitException("This command must be run in a guild")
+}
+fun requireUserPermission(event: MessageReceivedEvent, permission: Permission) {
+    if (event.member?.hasPermission(permission) == true) {
+        return
+    }
+    throw CommandExitException("You do not have permission to run this command")
+}
+fun requireUserPermission(event: SlashCommandInteractionEvent, permission: Permission) {
+    if (event.member?.hasPermission(permission) == true) {
+        return
+    }
+    throw CommandExitException("You do not have permission to run this command")
+}
+fun requireBotPermission(event: MessageReceivedEvent, permission: Permission) {
+    requireGuild(event)
+    if (event.guild?.selfMember?.hasPermission(permission) == true) {
+        return
+    }
+    throw CommandExitException("I do not have permission to run this command")
+}
+fun requireBotPermission(event: SlashCommandInteractionEvent, permission: Permission) {
+    requireGuild(event)
+    if (event.guild?.selfMember?.hasPermission(permission) == true) {
+        return
+    }
+    throw CommandExitException("I do not have permission to run this command")
+}
+
+fun checkIsNotGuildOwner(event: MessageReceivedEvent, userId: Long) {
+    requireGuild(event)
+    if (event.guild?.owner?.idLong == userId) {
+        throw CommandExitException("You cannot run this command on the guild owner")
+    }
+}
+fun checkIsNotGuildOwner(event: SlashCommandInteractionEvent, userId: Long) {
+    requireGuild(event)
+    if (event.guild?.owner?.idLong == userId) {
+        throw CommandExitException("You cannot run this command on the guild owner")
     }
 }
