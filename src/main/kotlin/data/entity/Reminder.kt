@@ -5,12 +5,13 @@ import com.j256.ormlite.table.DatabaseTable
 import tech.trip_kun.sinon.annotation.ReflectionNoArg
 
 @ReflectionNoArg
-@DatabaseTable(tableName = "database_info")
-class DatabaseInfo {
+@DatabaseTable(tableName = "reminders")
+class Reminder(@DatabaseField(foreign = true, canBeNull = false) var user: User) {
     @DatabaseField(generatedId = true)
     var id: Int = 0
+
     @DatabaseField(canBeNull = false)
-    var currentVersion: Int = 0
+    var reminder: String = ""
     @DatabaseField(canBeNull = false)
-    var firstVersion = 0
+    var timeUnix: Long = 0
 }

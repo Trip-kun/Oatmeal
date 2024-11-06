@@ -54,9 +54,6 @@ abstract class Command {
         if (arguments.stream().anyMatch { it.getName() == argument.getName() }) {
             throw CommandInitializationException("Argument with name " + argument.getName() + " already exists")
         }
-        if (arguments.stream().anyMatch {it.getType()==ArgumentType.TEXT}) {
-            throw CommandInitializationException("Text argument must be the last argument")
-        }
         if (arguments.isNotEmpty() && argument.getType() == ArgumentType.COMMAND) {
             throw CommandInitializationException("Command argument must be the first argument")
         }
@@ -100,9 +97,8 @@ abstract class Command {
             if (it.type!=OptionType.ATTACHMENT) {
                 if (first) {
                     first=false;
-                    content += it.asString
-                } else {
-                    content += " "+it.asString
+                    content += "\"${it.asString}\""
+                    content +=" \"${it.asString}\"" // Add quotes to the argument and add it to the content
                 }
             }
         }
@@ -124,10 +120,26 @@ abstract class Command {
         val index = Config.getConfig().prefix.length+1+(getFirstArgument()?.getName()?.length ?: 0)
         return parseArguments(event.message.contentRaw.substring(if (index>event.message.contentRaw.length) index-1 else index), event.message.attachments, roles, users, channels)
     }
+    private fun stripSurroundingQuotes(text: String): String {
+        if (text.length<2) {
+            return text
+        }
+        // Check for both single and double quotes, and remove them if they are present on either end
+        var start = 0
+        var end = text.length-1
+        if (text[start] == '"'  || text[start] == '\'') {
+            start++
+        }
+        if (text[end] == '"' || text[end] == '\'') {
+            end--
+        }
+        return text.substring(start, end+1)
+
+    }
     private fun parseArguments(messageContent: String, attachments: Collection<Message.Attachment>, mentionedRoles: Collection<Long>, mentionedUsers: Collection<Long>, mentionedChannels: Collection<Long>): List<ParsedArgument> {
         val parsedArguments = ArrayList<ParsedArgument>()
         val partsR = captureRegex.findAll(messageContent)
-        val parts = partsR.map { it.value }.toList().filter { it.isNotBlank() }
+        val parts = partsR.map { stripSurroundingQuotes(it.value) }.toList().filter { it.isNotBlank() }
         var index = 0
         if (parts.size==1 && parts[0].isEmpty()) {
             index = 1
@@ -381,6 +393,7 @@ enum class CommandCategory {
     ESSENTIAL,
     MODERATION,
     SETTINGS,
+    UTILITY
 }
 //*
 // * Adds an option to the slash command data

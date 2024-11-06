@@ -37,7 +37,6 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
         }
         commandListener = this
     }
-
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.author.isBot) {
             return

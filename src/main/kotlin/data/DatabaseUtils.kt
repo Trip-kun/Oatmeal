@@ -11,10 +11,12 @@ import tech.trip_kun.sinon.Config
 import tech.trip_kun.sinon.EmergencyNotification
 import tech.trip_kun.sinon.addEmergencyNotification
 import tech.trip_kun.sinon.data.entity.DatabaseInfo
+import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
 import java.sql.SQLException
 
 private var userDao: Dao<User, Long>? = null
+private var reminderDao: Dao<Reminder, Long>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
 
 //Complete
@@ -195,6 +197,10 @@ private fun loadDatabase() {
         val userDao2: Dao<User, Long> = DaoManager.createDao(connectionSource, User::class.java)
         userDao2.setObjectCache(true)
         userDao = userDao2
+        TableUtils.createTableIfNotExists(connectionSource, Reminder::class.java)
+        val reminderDao2: Dao<Reminder, Long> = DaoManager.createDao(connectionSource, Reminder::class.java)
+        reminderDao2.setObjectCache(true)
+        reminderDao = reminderDao2
 
         databaseEnabled = true
         dbTries = 0
@@ -221,7 +227,15 @@ fun getUserDao(): Dao<User, Long> {
     }
     return userDao!!
 }
-
+fun getReminderDao(): Dao<Reminder, Long> {
+    if (!databaseEnabled && !databaseDoNotTryAgain) {
+        runSQLUntilMaxTries { loadDatabase() }
+    }
+    if (reminderDao == null) {
+        throw DatabaseException("Reminder DAO is null")
+    }
+    return reminderDao!!
+}
 private fun upgrade(startVersion: Int, endVersion: Int) {
     if (startVersion < endVersion) {
         when (startVersion) {
