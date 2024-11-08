@@ -10,6 +10,7 @@ import kotlinx.coroutines.*
 import tech.trip_kun.sinon.Config
 import tech.trip_kun.sinon.EmergencyNotification
 import tech.trip_kun.sinon.addEmergencyNotification
+import tech.trip_kun.sinon.data.entity.BanEntry
 import tech.trip_kun.sinon.data.entity.DatabaseInfo
 import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
@@ -17,6 +18,7 @@ import java.sql.SQLException
 
 private var userDao: Dao<User, Long>? = null
 private var reminderDao: Dao<Reminder, Long>? = null
+private var banEntryDao: Dao<BanEntry, Int>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
 
 //Complete
@@ -201,6 +203,10 @@ private fun loadDatabase() {
         val reminderDao2: Dao<Reminder, Long> = DaoManager.createDao(connectionSource, Reminder::class.java)
         reminderDao2.setObjectCache(true)
         reminderDao = reminderDao2
+        TableUtils.createTableIfNotExists(connectionSource, BanEntry::class.java)
+        val banEntryDao2: Dao<BanEntry, Int> = DaoManager.createDao(connectionSource, BanEntry::class.java)
+        banEntryDao2.setObjectCache(true)
+        banEntryDao = banEntryDao2
 
         databaseEnabled = true
         dbTries = 0
@@ -235,6 +241,15 @@ fun getReminderDao(): Dao<Reminder, Long> {
         throw DatabaseException("Reminder DAO is null")
     }
     return reminderDao!!
+}
+fun getBanEntryDao(): Dao<BanEntry, Int> {
+    if (!databaseEnabled && !databaseDoNotTryAgain) {
+        runSQLUntilMaxTries { loadDatabase() }
+    }
+    if (banEntryDao == null) {
+        throw DatabaseException("BanEntry DAO is null")
+    }
+    return banEntryDao!!
 }
 private fun upgrade(startVersion: Int, endVersion: Int) {
     if (startVersion < endVersion) {

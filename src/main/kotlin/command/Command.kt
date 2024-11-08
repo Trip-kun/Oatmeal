@@ -496,3 +496,36 @@ fun checkIsNotGuildOwner(event: SlashCommandInteractionEvent, userId: Long) {
         throw CommandExitException("You cannot run this command on the guild owner")
     }
 }
+
+fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
+    requireGuild(event)
+    if (event.guild.retrieveMemberById(userId)?.complete()?.let { event.guild.selfMember.canInteract(it) } == true) {
+        return
+    }
+    throw CommandExitException("You cannot run this command on a user with a higher role than me")
+}
+fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
+    requireGuild(event)
+    if (event.guild?.retrieveMemberById(userId)?.complete()?.let { event.guild!!.selfMember.canInteract(it) } == true) {
+        return
+    }
+    throw CommandExitException("You cannot run this command on a user with a higher role than me")
+}
+fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
+    requireGuild(event)
+    val member = event.guild?.retrieveMemberById(userId)?.complete()
+    val runningMember = event.member
+    if (runningMember?.canInteract(runningMember) == true) {
+        return
+    }
+    throw CommandExitException("You cannot run this command on a user with a higher role than you")
+}
+fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
+    requireGuild(event)
+    val member = event.guild.retrieveMemberById(userId).complete()
+    val runningMember = event.member
+    if (runningMember?.canInteract(runningMember) == true) {
+        return
+    }
+    throw CommandExitException("You cannot run this command on a user with a higher role than you")
+}

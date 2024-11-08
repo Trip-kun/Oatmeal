@@ -26,6 +26,14 @@ class Kick(private var jda: JDA) : Command() {
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
         val user = jda.retrieveUserById(userId).complete() ?: throw CommandExitException("Invalid arguments")
+        checkHierarchy(event, user.idLong)
+        checkUserHierarchy(event, user.idLong)
+        if (userId == event.author.idLong) {
+            throw CommandExitException("You cannot kick yourself")
+        }
+        if (userId == event.jda.selfUser.idLong) {
+            throw CommandExitException("You cannot kick me using this command")
+        }
         val guild = event.guild
         val member = guild?.retrieveMember(user)?.complete() ?: throw CommandExitException("Invalid arguments")
         checkIsNotGuildOwner(event, member.idLong)
@@ -40,6 +48,14 @@ class Kick(private var jda: JDA) : Command() {
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
         val user = jda.retrieveUserById(userId).complete() ?: throw CommandExitException("Invalid arguments")
+        checkHierarchy(event, user.idLong)
+        checkUserHierarchy(event, user.idLong)
+        if (userId == event.user.idLong) {
+            throw CommandExitException("You cannot kick yourself")
+        }
+        if (userId == event.jda.selfUser.idLong) {
+            throw CommandExitException("You cannot kick me using this command")
+        }
         val guild = event.guild
         val member = guild?.retrieveMember(user)?.complete() ?: throw CommandExitException("Invalid arguments")
         checkIsNotGuildOwner(event, member.idLong)
