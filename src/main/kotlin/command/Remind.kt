@@ -123,7 +123,7 @@ class Remind(private val jda: JDA): Command() {
             val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.user.idLong) }
             if (heldUser.user == null) {
-                throw CommandExitException("Sorry something went wrong")
+                heldUser.user = User(event.user.idLong)
             }
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
             event.hook.sendMessage(message).queue()
@@ -132,7 +132,7 @@ class Remind(private val jda: JDA): Command() {
             val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.user.idLong) }
             if (heldUser.user == null) {
-                throw CommandExitException("Sorry something went wrong")
+                heldUser.user = User(event.user.idLong)
             }
             val message = commonWork(durationIn, null, reminder, heldUser.user!!)
             event.hook.sendMessage(message).queue()
