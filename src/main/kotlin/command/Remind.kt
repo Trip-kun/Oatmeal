@@ -2,13 +2,9 @@ package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.dao.GenericRawResults
-import com.j256.ormlite.field.types.DateTimeType
-import javassist.expr.Cast
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import net.dv8tion.jda.api.interactions.commands.OptionType
-import net.dv8tion.jda.api.utils.TimeFormat
 import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
 import tech.trip_kun.sinon.data.getReminderDao
@@ -20,12 +16,10 @@ import java.time.Instant
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.util.*
-import kotlin.concurrent.schedule
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class Remind(private val jda: JDA): Command() {
-    private var timerTask: TimerTask;
+    private var timerTask: TimerTask
     private val timer = Timer()
     init {
         addArgument(Argument("remind", "Sets a reminder for the future", true, ArgumentType.COMMAND, null))
@@ -92,7 +86,7 @@ class Remind(private val jda: JDA): Command() {
                 throw CommandExitException("Invalid argument: time cannot be provided for durations less than a day")
             }
             val time = arguments[2].getStringValue() ?: throw CommandExitException("Invalid arguments")
-            var heldUser = HeldUser()
+            val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.author.idLong) }
             if (heldUser.user == null) {
                 heldUser.user = User(event.author.idLong)
@@ -100,7 +94,7 @@ class Remind(private val jda: JDA): Command() {
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
             event.channel.sendMessage(message).queue()
         } else {
-            var heldUser = HeldUser()
+            val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.author.idLong) }
             if (heldUser.user == null) {
                 heldUser.user = User(event.author.idLong)
@@ -126,7 +120,7 @@ class Remind(private val jda: JDA): Command() {
                 throw CommandExitException("Invalid argument: time cannot be provided for durations less than a day")
             }
             val time = arguments[2].getStringValue() ?: throw CommandExitException("Invalid arguments")
-            var heldUser = HeldUser()
+            val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.user.idLong) }
             if (heldUser.user == null) {
                 throw CommandExitException("Sorry something went wrong")
@@ -135,7 +129,7 @@ class Remind(private val jda: JDA): Command() {
             event.hook.sendMessage(message).queue()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         } else {
-            var heldUser = HeldUser()
+            val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.user.idLong) }
             if (heldUser.user == null) {
                 throw CommandExitException("Sorry something went wrong")
@@ -150,7 +144,7 @@ class Remind(private val jda: JDA): Command() {
     }
     private fun commonWork(duration: String, time: String?, reminder: String, user: User):String {
         try {
-            var unixTime: Long = 0;
+            var unixTime: Long
             try {
                 unixTime = parseTime(duration, time == null, user.timeZone)
                 if (time != null) {
@@ -177,10 +171,10 @@ class Remind(private val jda: JDA): Command() {
     }
 }
 @Throws(DateTimeParseException::class)
-fun parseTime(time: String, includeSmallUnits: Boolean=true, timeZone: String): Long {
+fun parseTime(time: String, includeSmallUnits: Boolean=true, timeZoneString: String): Long {
     var now = System.currentTimeMillis()
     if (!includeSmallUnits) {
-        val timeZone = TimeZone.getTimeZone(timeZone)
+        val timeZone = TimeZone.getTimeZone(timeZoneString)
         val offset = timeZone.getOffset(now)
         now+=offset // Bring to user's timezone
         now = Instant.ofEpochMilli(now).truncatedTo(ChronoUnit.DAYS).toEpochMilli().milliseconds.inWholeMilliseconds
@@ -188,14 +182,13 @@ fun parseTime(time: String, includeSmallUnits: Boolean=true, timeZone: String): 
     }
     val parts = time.split("\\s".toRegex()).filter { it.isNotEmpty() }
     var unixTime = now
-    var i = 0;
+    var i = 0
     while (i<parts.size) {
         if (parts[i].isBlank() || parts[i] == "and" || parts[i] == "&") {
             i++
             continue
         }
         val part = parts[i]
-        var hasUnit = false
         // Check for number first and unit after
         // Units can have multiple forms
         // First strip out the number and get the remaining string
@@ -228,7 +221,6 @@ fun parseTime(time: String, includeSmallUnits: Boolean=true, timeZone: String): 
             }
         }
         val unitTime = parseUnit(unit)
-        hasUnit = true
         unixTime += number.toLong() * unitTime
         i++
     }

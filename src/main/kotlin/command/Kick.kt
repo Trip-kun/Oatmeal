@@ -35,7 +35,7 @@ class Kick(private var jda: JDA) : Command() {
             throw CommandExitException("You cannot kick me using this command")
         }
         val guild = event.guild
-        val member = guild?.retrieveMember(user)?.complete() ?: throw CommandExitException("Invalid arguments")
+        val member = guild.retrieveMember(user).complete() ?: throw CommandExitException("Invalid arguments")
         checkIsNotGuildOwner(event, member.idLong)
         member.kick().queue()
         event.channel.sendMessage("Kicked ${member.effectiveName}").queue()

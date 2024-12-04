@@ -7,5 +7,4 @@ package tech.trip_kun.sinon.exception
  * @param message The message to display
  * @constructor Create a new CommandExitException
  */
-class CommandExitException(message: String) : RuntimeException(message) {
-}
+class CommandExitException(message: String) : RuntimeException(message)

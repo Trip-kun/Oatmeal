@@ -7,20 +7,21 @@ import com.j256.ormlite.dao.DaoManager
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource
 import com.j256.ormlite.table.TableUtils
 import kotlinx.coroutines.*
-import tech.trip_kun.sinon.Config
 import tech.trip_kun.sinon.EmergencyNotification
+import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.addEmergencyNotification
 import tech.trip_kun.sinon.data.entity.BanEntry
 import tech.trip_kun.sinon.data.entity.DatabaseInfo
 import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
+import tech.trip_kun.sinon.getConfig
 import java.sql.SQLException
 
 private var userDao: Dao<User, Long>? = null
 private var reminderDao: Dao<Reminder, Long>? = null
 private var banEntryDao: Dao<BanEntry, Int>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
-
+private val DATABASE_VERSION = 1
 //Complete
 //Need to make a try-3-times method to use for all database calls
 // If all 3 calls fail we throw a marked runtime exception and notify the admins
@@ -29,8 +30,8 @@ private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
 // We will never force a full shutdown of the bot, but we will force a shutdown of the database
 // This is to ensure that the bot can still function without the database
 private var databaseEnabled = false
-val config = Config.getConfig()
-
+val config = getConfig()
+val globalDispatcher = newSingleThreadContext("GlobalDispatcher")
 class DatabaseException(message: String) : RuntimeException(message) {
     private var hasBeenNotified = false
     fun hasBeenNotified(): Boolean {
@@ -73,60 +74,7 @@ private fun blockingRunSQLUntilMaxTries(action: () -> Unit): DatabaseException? 
                     databaseEnabled = false
                     if (makeDatabaseJob == null || makeDatabaseJob!!.isCompleted) {
                         makeDatabaseJob =
-                            GlobalScope.launch(newSingleThreadContext("DatabaseReconnect")) {
-                                if (databaseDoNotTryAgain || dbTries >= config.databaseSettings.databaseMaxRetries) {
-                                    return@launch
-                                }
-                                while (!databaseEnabled) {
-                                    isJobLaunched = true
-                                    delay(300 * 1000) //TODO: Put this in the config
-                                    isJobLaunched = false
-                                    if (databaseDoNotTryAgain) {
-                                        break
-                                    }
-                                    try {
-                                        isJobLaunched = false
-                                        loadDatabase()
-                                        isJobLaunched = true
-                                        addEmergencyNotification(
-                                            EmergencyNotification(
-                                                "Database reconnected after ${config.databaseSettings.databaseMaxRetries} tries",
-                                                1,
-                                                null
-                                            )
-                                        )
-                                        dbTries =0
-                                        databaseDoNotTryAgain = false
-                                        databaseEnabled = true
-                                    } catch (e: DatabaseException) {
-                                        isJobLaunched = true
-                                        addEmergencyNotification(
-                                            EmergencyNotification(
-                                                "Database failed to load on try ${dbTries + 2} of ${config.databaseSettings.databaseMaxRetries}",
-                                                1,
-                                                e.stackTraceToString()
-
-                                            )
-                                        )
-                                        isJobLaunched = true
-                                        dbTries++;
-                                    }
-                                    if (databaseEnabled) {
-                                        break
-                                    }
-                                    if (dbTries + 1 >= config.databaseSettings.databaseMaxRetries) {
-                                        addEmergencyNotification(
-                                            EmergencyNotification(
-                                                "Database failed to load on try ${dbTries} of ${config.databaseSettings.databaseMaxRetries}. It will remain shutdown and will not be tried again",
-                                                1,
-                                                null
-                                            )
-                                        )
-                                        databaseDoNotTryAgain = true
-                                    }
-                                }
-                                isJobLaunched = false
-                            }
+                            GlobalScope.launch(globalDispatcher) { reloadDatabase() }
                     }
                 }
                 if (dbexception == null || !dbexception.hasBeenNotified()) {
@@ -141,7 +89,7 @@ private fun blockingRunSQLUntilMaxTries(action: () -> Unit): DatabaseException? 
                     dbexception?.setNotified()
                 }
                 if (tries < config.databaseSettings.databaseMaxRetries) {
-                    println("Retrying in ${config.databaseSettings.databaseRetryDelay}ms")
+                    Logger.warn("Retrying in ${config.databaseSettings.databaseRetryDelay}ms")
                     Thread.sleep(config.databaseSettings.databaseRetryDelay.toLong())
                 } else {
                     if (dbexception != null) {
@@ -185,13 +133,13 @@ private fun loadDatabase() {
         val databaseInfo = databaseInfoDao.queryForId(0)
         if (databaseInfo == null) {
             val newDatabaseInfo = DatabaseInfo()
-            newDatabaseInfo.currentVersion = config.version
-            newDatabaseInfo.firstVersion = config.version
+            newDatabaseInfo.currentVersion = DATABASE_VERSION
+            newDatabaseInfo.firstVersion = DATABASE_VERSION
             databaseInfoDao.create(newDatabaseInfo)
         } else {
-            if (databaseInfo.currentVersion < config.version) {
-                upgrade(databaseInfo.currentVersion, config.version)
-                databaseInfo.currentVersion = config.version
+            if (databaseInfo.currentVersion < DATABASE_VERSION) {
+                upgrade(databaseInfo.currentVersion, DATABASE_VERSION)
+                databaseInfo.currentVersion = DATABASE_VERSION
                 databaseInfoDao.update(databaseInfo)
             }
         }
@@ -260,4 +208,91 @@ private fun upgrade(startVersion: Int, endVersion: Int) {
         }
         upgrade(startVersion + 1, endVersion)
     }
+}
+
+
+private suspend fun reloadDatabase() {
+    if (databaseDoNotTryAgain || dbTries >= config.databaseSettings.databaseMaxRetries) {
+        return
+    }
+    while (!databaseEnabled) {
+        isJobLaunched = true
+        delay(config.databaseSettings.databaseReloadTime.toLong())
+        isJobLaunched = false
+        if (databaseDoNotTryAgain) {
+            break
+        }
+        try {
+            isJobLaunched = false
+            loadDatabase()
+            isJobLaunched = true
+            addEmergencyNotification(
+                EmergencyNotification(
+                    "Database reconnected after ${config.databaseSettings.databaseMaxRetries} tries",
+                    1,
+                    null
+                )
+            )
+            dbTries =0
+            databaseDoNotTryAgain = false
+            databaseEnabled = true
+        } catch (e: DatabaseException) {
+            isJobLaunched = true
+            addEmergencyNotification(
+                EmergencyNotification(
+                    "Database failed to load on try ${dbTries + 2} of ${config.databaseSettings.databaseMaxRetries}",
+                    1,
+                    e.stackTraceToString()
+
+                )
+            )
+            isJobLaunched = true
+            dbTries++
+        }
+        if (databaseEnabled) {
+            break
+        }
+        if (dbTries + 1 >= config.databaseSettings.databaseMaxRetries) {
+            addEmergencyNotification(
+                EmergencyNotification(
+                    "Database failed to load on try ${dbTries} of ${config.databaseSettings.databaseMaxRetries}. It will remain shutdown and will not be tried again",
+                    1,
+                    null
+                )
+            )
+            databaseDoNotTryAgain = true
+        }
+    }
+    isJobLaunched = false
+}
+
+private fun closeDatabase() {
+    if (databaseEnabled) {
+        userDao = null
+        reminderDao = null
+        banEntryDao = null
+        databaseDoNotTryAgain = true
+        databaseEnabled = false
+        dbTries = config.databaseSettings.databaseMaxRetries+1
+        globalDispatcher.close()
+    } else {
+        databaseDoNotTryAgain = true
+    }
+}
+fun getDatabaseStatus(): String {
+    var start = "Database Status: Database is "
+    start += if (databaseEnabled) {
+        "enabled"
+    } else {
+        "disabled"
+    }
+    // Also say if we are trying to reconnect or permanently disabled
+    start += if (databaseDoNotTryAgain) {
+        " and will not be tried again"
+    } else if (isJobLaunched) {
+        " and is currently trying to reconnect"
+    } else {
+        " and is not trying to reconnect (this should only occur when the database is enabled)"
+    }
+    return start
 }

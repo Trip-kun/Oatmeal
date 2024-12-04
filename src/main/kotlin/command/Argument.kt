@@ -1,7 +1,6 @@
 package tech.trip_kun.sinon.command
 
 import net.dv8tion.jda.api.entities.Message.Attachment
-import net.dv8tion.jda.api.entities.User
 
 enum class ArgumentType {
     COMMAND,
@@ -35,19 +34,19 @@ class Argument(
         }
     }
     fun getName(): String {
-        return this.name;
+        return this.name
     }
     fun getDescription(): String {
-        return this.description;
+        return this.description
     }
     fun getRequired(): Boolean {
-        return this.required;
+        return this.required
     }
     fun getType(): ArgumentType {
-        return this.type;
+        return this.type
     }
     fun getChoices(): List<String>? {
-        return this.choices;
+        return this.choices
     }
 }
 class ParsedArgument {

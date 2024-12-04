@@ -24,7 +24,7 @@ class SetTimezone(private val jda: JDA) : Command() {
 
     override fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
-        var timezone: String? = null;
+        var timezone: String? = null
         if (arguments.isNotEmpty()) {
             timezone = arguments[0].getStringValue()
         }
@@ -40,7 +40,7 @@ class SetTimezone(private val jda: JDA) : Command() {
 
     override fun handler(event: SlashCommandInteractionEvent) {
         val arguments = parseArguments(event)
-        var timezone: String? = null;
+        var timezone: String? = null
         if (arguments.isNotEmpty()) {
             timezone = arguments[0].getStringValue()
         }
@@ -48,13 +48,12 @@ class SetTimezone(private val jda: JDA) : Command() {
             timezone = null
         }
         val user = event.user
-        val embedBuilder = commonWork(user, timezone)
         val embedBuilders = commonWork(user, timezone)
         for (embedBuilder in embedBuilders) {
             event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
         }
     }
-    fun commonWork(user: User, timezone: String?): Array<EmbedBuilder> {
+    private fun commonWork(user: User, timezone: String?): Array<EmbedBuilder> {
         if (timezone == null) {
             val embedBuilders: ArrayList<EmbedBuilder> = arrayListOf()
             var embedBuilder = EmbedBuilder()

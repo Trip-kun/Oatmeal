@@ -2,6 +2,7 @@ package tech.trip_kun.sinon.command
 
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -9,9 +10,9 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
-import tech.trip_kun.sinon.Config
 import tech.trip_kun.sinon.exception.CommandExitException
 import tech.trip_kun.sinon.exception.CommandInitializationException
+import tech.trip_kun.sinon.getConfig
 
 abstract class Command {
     private lateinit var category: CommandCategory
@@ -32,7 +33,7 @@ abstract class Command {
         val firstArgument = getFirstArgument()
             ?: throw CommandInitializationException("Command must have at least one argument")
         val slashCommandData = Commands.slash(firstArgument.getName(), firstArgument.getDescription())
-        arguments.forEach() {
+        arguments.forEach {
             addOption(slashCommandData, it)
         }
         jda.upsertCommand(slashCommandData).queue()
@@ -96,7 +97,7 @@ abstract class Command {
             }
             if (it.type!=OptionType.ATTACHMENT) {
                 if (first) {
-                    first=false;
+                    first=false
                     content += "\"${it.asString}\""
                     content +=" \"${it.asString}\"" // Add quotes to the argument and add it to the content
                 }
@@ -117,7 +118,7 @@ abstract class Command {
         for (mentionedChannel in event.message.mentions.channels) {
             channels.add(mentionedChannel.idLong)
         }
-        val index = Config.getConfig().prefix.length+1+(getFirstArgument()?.getName()?.length ?: 0)
+        val index = getConfig().discordSettings.prefix.length+1+(getFirstArgument()?.getName()?.length ?: 0)
         return parseArguments(event.message.contentRaw.substring(if (index>event.message.contentRaw.length) index-1 else index), event.message.attachments, roles, users, channels)
     }
     private fun stripSurroundingQuotes(text: String): String {
@@ -471,7 +472,7 @@ fun requireUserPermission(event: SlashCommandInteractionEvent, permission: Permi
 }
 fun requireBotPermission(event: MessageReceivedEvent, permission: Permission) {
     requireGuild(event)
-    if (event.guild?.selfMember?.hasPermission(permission) == true) {
+    if (event.guild.selfMember.hasPermission(permission) == true) {
         return
     }
     throw CommandExitException("I do not have permission to run this command")
@@ -486,7 +487,7 @@ fun requireBotPermission(event: SlashCommandInteractionEvent, permission: Permis
 
 fun checkIsNotGuildOwner(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
-    if (event.guild?.owner?.idLong == userId) {
+    if (event.guild.owner?.idLong == userId) {
         throw CommandExitException("You cannot run this command on the guild owner")
     }
 }
@@ -499,7 +500,7 @@ fun checkIsNotGuildOwner(event: SlashCommandInteractionEvent, userId: Long) {
 
 fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
-    if (event.guild.retrieveMemberById(userId)?.complete()?.let { event.guild.selfMember.canInteract(it) } == true) {
+    if (event.guild.retrieveMemberById(userId).complete()?.let { event.guild.selfMember.canInteract(it) } == true) {
         return
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
@@ -513,18 +514,18 @@ fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
 }
 fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
-    val member = event.guild?.retrieveMemberById(userId)?.complete()
     val runningMember = event.member
-    if (runningMember?.canInteract(runningMember) == true) {
+    val targetMember = event.guild?.retrieveMemberById(userId)?.complete()
+    if (targetMember?.let { runningMember?.canInteract(it) } == true) {
         return
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than you")
 }
 fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
-    val member = event.guild.retrieveMemberById(userId).complete()
     val runningMember = event.member
-    if (runningMember?.canInteract(runningMember) == true) {
+    val targetMember: Member? = event.guild.retrieveMemberById(userId).complete()
+    if (targetMember?.let { runningMember?.canInteract(it) } == true) {
         return
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than you")

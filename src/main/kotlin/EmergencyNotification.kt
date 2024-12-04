@@ -3,7 +3,6 @@ package tech.trip_kun.sinon
 import net.dv8tion.jda.api.utils.FileUpload
 import okhttp3.internal.notify
 import okhttp3.internal.wait
-import java.util.PriorityQueue
 import java.util.concurrent.PriorityBlockingQueue
 
 // This system will be used to send emergency notifications to admins.
@@ -23,7 +22,7 @@ data class EmergencyNotification(
 
 }
 
-private lateinit var notificationObject: Any;
+private lateinit var notificationObject: Any
 
 private val emergencyNotificationPriorityQueue: PriorityBlockingQueue<EmergencyNotification> = PriorityBlockingQueue()
 private val jda = getJDA()
@@ -37,7 +36,7 @@ fun addEmergencyNotification(emergencyNotification: EmergencyNotification) {
         notificationObject.notify()
     }
 }
-private val config = Config.getConfig()
+private val config = getConfig().discordSettings
 private val sendToAdmins = config.emergencyNotificationsForAdmins
 private val sendToChannels = config.emergencyNotificationsForChannels
 private val admins = config.admins
@@ -97,4 +96,8 @@ fun stopNotificationThread() {
     if (notificationThread.isAlive) {
         notificationThread.interrupt()
     }
+}
+
+fun getEmergencyNotificationStatus(): String {
+    return "Emergency Notification System Status: Emergency Notification System is ${if (notificationThread.isAlive) "running" else "not running"}"
 }

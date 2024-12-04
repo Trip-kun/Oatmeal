@@ -5,11 +5,10 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
 class Ping(private val jda: JDA): Command() {
-    private val name: String
-    private val description: String
+    private val name: String = "ping"
+    private val description: String = "Pong!"
+
     init {
-        name = "ping"
-        description = "Pong!"
         addArgument(Argument(name,description,true, ArgumentType.COMMAND, null))
         initialize(jda)
     }
@@ -23,7 +22,6 @@ class Ping(private val jda: JDA): Command() {
     }
 
     override fun handler(event: SlashCommandInteractionEvent) {
-        println("Slash command")
         event.hook.sendMessage("Pong!").queue()
     }
 
