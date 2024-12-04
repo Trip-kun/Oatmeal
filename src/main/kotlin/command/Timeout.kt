@@ -67,7 +67,7 @@ class Timeout(private val jda: JDA) : Command() {
         checkUserHierarchy(event, member.idLong)
         checkHierarchy(event, member.idLong)
         val embedBuilder = commonWork(author, member, time, unit, reason)
-        event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
+        event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
     }
     private fun commonWork(author: Member, member: Member, time: Int, unit: String, reason: String): EmbedBuilder {
         if (member.idLong == author.idLong) {

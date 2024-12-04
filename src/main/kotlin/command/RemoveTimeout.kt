@@ -46,7 +46,7 @@ class RemoveTimeout(private val jda: JDA) : Command() {
         checkUserHierarchy(event, member.idLong)
         checkHierarchy(event, member.idLong)
         val embedBuilder = commonWork(author, member)
-        event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
+        event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
     }
     private fun commonWork(author: Member, member: Member): EmbedBuilder {
         val embedBuilder = EmbedBuilder()
