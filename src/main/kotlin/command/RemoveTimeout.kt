@@ -50,8 +50,8 @@ class RemoveTimeout(private val jda: JDA) : Command() {
     }
     private fun commonWork(author: Member, member: Member): EmbedBuilder {
         val embedBuilder = EmbedBuilder()
-        if (member.isTimedOut()) {
-            member.removeTimeout()
+        if (member.isTimedOut) {
+            member.removeTimeout().queue()
             embedBuilder.setTitle("Removed timeout for ${member.effectiveName}")
         } else {
             embedBuilder.setTitle("${member.effectiveName} is not timed out")
