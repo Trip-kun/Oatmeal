@@ -49,9 +49,14 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                 }
             } catch (e: CommandExitException) {
                 event.channel.sendMessage(e.message!!).queue()
-            } catch (e: DatabaseException) {
-                event.channel.sendMessage("Something went wrong with the database").queue()
             } catch (e: Exception) {
+                if (e is DatabaseException) {
+                    Logger.error("Database Exception", e)
+                    event.channel.sendMessage("Something went wrong with the database").queue()
+                } else {
+                    Logger.error("Command Exception: ${command}", e)
+                    event.channel.sendMessage("Something went wrong").queue()
+                }
                 addEmergencyNotification(
                     EmergencyNotification(
                         "Command Exception: ${command}",
@@ -71,9 +76,14 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                 commands[command]!!.handler(event)
             } catch (e: CommandExitException) {
                 event.hook.sendMessage(e.message!!).queue()
-            } catch (e: DatabaseException) {
-                event.hook.sendMessage("Something went wrong with the database").queue()
-            } catch (e: Exception) {
+            }  catch (e: Exception) {
+                if (e is DatabaseException) {
+                    Logger.error("Database Exception", e)
+                    event.hook.sendMessage("Something went wrong with the database").queue()
+                } else {
+                    Logger.error("Command Exception: ${command}", e)
+                    event.hook.sendMessage("Something went wrong").queue()
+                }
                 addEmergencyNotification(
                     EmergencyNotification(
                         "Command Exception: ${command}",
