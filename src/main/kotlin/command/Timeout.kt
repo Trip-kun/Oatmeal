@@ -79,6 +79,19 @@ class Timeout(private val jda: JDA) : Command() {
         if (member.isOwner) {
             throw CommandExitException("You cannot timeout the owner")
         }
+        if (time<=0) {
+            throw CommandExitException("Invalid arguments: time should be more than 0")
+        }
+        val timeInUnit = when (unit) {
+            "seconds" -> time
+            "minutes" -> time*60
+            "hours" -> time*60*60
+            "days" -> time*60*60*24
+            else -> throw CommandExitException("Invalid unit")
+        }
+        if (timeInUnit > 28*24*60*60) {
+            throw CommandExitException("Invalid arguments: time should be less than 28 days. Use a lower value")
+        }
         try {
             when (unit) {
                 "seconds" -> member.timeoutFor(time.toLong(), TimeUnit.SECONDS).queue()

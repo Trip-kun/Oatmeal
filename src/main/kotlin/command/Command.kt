@@ -338,7 +338,7 @@ abstract class Command {
                             }
                             parsedArguments.add(ParsedArgument(ArgumentType.WORD, ""))
                         } else {
-                            if (parts.get(index).contains("\\s".toRegex())) {
+                            if (parts[index].contains("\\s".toRegex())) {
                                 if (it.getType() == ArgumentType.SUBCOMMAND) {
                                     throw CommandExitException("Argument subcommand " + it.getName() + " must not contain spaces (do not use quotes for this argument)")
                                 } else {
