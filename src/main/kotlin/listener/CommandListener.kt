@@ -69,7 +69,6 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
     }
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-
         val command = event.name
         if (commands.containsKey(command)) {
             try {
