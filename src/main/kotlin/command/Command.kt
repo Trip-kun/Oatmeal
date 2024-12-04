@@ -96,10 +96,28 @@ abstract class Command {
                 }
             }
             if (it.type!=OptionType.ATTACHMENT) {
+                val str = when (it.type) {
+                    OptionType.STRING -> it.asString
+                    OptionType.INTEGER -> it.asLong.toString()
+                    OptionType.BOOLEAN -> it.asBoolean.toString()
+                    OptionType.NUMBER -> it.asDouble.toString()
+                    OptionType.USER -> it.asUser.asMention
+                    OptionType.CHANNEL -> it.asChannel.asMention
+                    OptionType.ROLE -> it.asRole.asMention
+                    OptionType.SUB_COMMAND -> it.name
+                    OptionType.SUB_COMMAND_GROUP -> it.name
+                    OptionType.MENTIONABLE -> it.asMentionable.asMention
+                    else -> ""
+                }
                 if (first) {
-                    first=false
-                    content += "\"${it.asString}\""
-                    content +=" \"${it.asString}\"" // Add quotes to the argument and add it to the content
+                    first = false
+                    content += "\""
+                    content += str
+                    content += "\""
+                } else {
+                    content += " \""
+                    content += str
+                    content += "\""
                 }
             }
         }
@@ -327,14 +345,14 @@ abstract class Command {
                                     throw CommandExitException("Argument word " + it.getName() + " must not contain spaces (do not use quotes for this argument)")
                                 }
                             }
-                            if (it.getRequired() && parts.get(index).isEmpty()) {
+                            if (it.getRequired() && parts[index].isEmpty()) {
                                 if (it.getType() == ArgumentType.SUBCOMMAND) {
                                     throw CommandExitException("Argument subcommand " + it.getName() + " is required")
                                 } else {
                                     throw CommandExitException("Argument word " + it.getName() + " is required")
                                 }
                             }
-                            if (!it.getRequired() && parts.get(index).isEmpty()) {
+                            if (!it.getRequired() && parts[index].isEmpty()) {
                                 parsedArguments.add(ParsedArgument(it.getType(), ""))
                             } else {
                                 if (it.getType() == ArgumentType.SUBCOMMAND) {
@@ -413,7 +431,11 @@ private fun addOption(slashCommandData: SlashCommandData, argument: Argument) {
             slashCommandData.addOption(OptionType.INTEGER, argument.getName(),argument.getDescription(), argument.getRequired())
         }
         ArgumentType.WORD,ArgumentType.TEXT -> {
-            slashCommandData.addOption(OptionType.STRING, argument.getName(),argument.getDescription(), argument.getRequired())
+                val optionData = OptionData(OptionType.STRING,argument.getName(),argument.getDescription(),argument.getRequired(),false)
+                argument.getChoices()?.forEach { choice ->
+                    optionData.addChoice(choice,choice)
+                }
+                slashCommandData.addOptions(optionData)
         }
         ArgumentType.BOOLEAN -> {
             slashCommandData.addOption(OptionType.BOOLEAN, argument.getName(),argument.getDescription(), argument.getRequired())
