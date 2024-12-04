@@ -93,6 +93,7 @@ class Remind(private val jda: JDA): Command() {
             }
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
             event.channel.sendMessage(message).queue()
+            runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         } else {
             val heldUser = HeldUser()
             runSQLUntilMaxTries { heldUser.user = getUserDao().queryForId(event.author.idLong) }
@@ -101,6 +102,7 @@ class Remind(private val jda: JDA): Command() {
             }
             val message = commonWork(durationIn, null, reminder, heldUser.user!!)
             event.channel.sendMessage(message).queue()
+            runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         }
     }
 
