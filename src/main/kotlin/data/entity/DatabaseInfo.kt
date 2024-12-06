@@ -9,8 +9,10 @@ import tech.trip_kun.sinon.annotation.ReflectionNoArg
 class DatabaseInfo {
     @DatabaseField(generatedId = true)
     var id: Int = 0
+
     @DatabaseField(canBeNull = false)
     var currentVersion: Int = 0
+
     @DatabaseField(canBeNull = false)
     var firstVersion = 0
 }

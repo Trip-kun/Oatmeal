@@ -3,8 +3,10 @@ package tech.trip_kun.sinon
 import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
 import java.io.File
+
 @OptIn(ExperimentalSerializationApi::class)
-private val json = Json { encodeDefaults = true; prettyPrint = true; explicitNulls=false }
+private val json = Json { encodeDefaults = true; prettyPrint = true; explicitNulls = false }
+
 @Serializable
 data class Config(
     val version: String = "alpha",
@@ -16,6 +18,7 @@ data class Config(
         require(version.isNotBlank()) { "version must be set" }
     }
 }
+
 @Serializable
 data class ThreadSettings(
     val threadPoolSize: Int = 10,
@@ -26,6 +29,7 @@ data class ThreadSettings(
         require(threadSleep >= 0) { "threadSleep must be greater than or equal to 0" }
     }
 }
+
 @Serializable
 data class DatabaseSettings(
     val databaseURL: String = "localhost", // The URL of the database
@@ -37,7 +41,7 @@ data class DatabaseSettings(
     val databaseRetryDelay: Int = 1000, // 1 second
     val databaseMaxConnections: Int = 10, // 0 for unlimited
     val databaseMaxResponses: Int = 10,  // 0 for unlimited
-    val databaseReloadTime: Int = 5*60*1000, // 5 minutes
+    val databaseReloadTime: Int = 5 * 60 * 1000, // 5 minutes
 ) {
     init {
         require(databasePort in 1..65535) { "port must be between 1 and 65535" }
@@ -54,7 +58,7 @@ data class DatabaseSettings(
 }
 
 @Serializable
-data class DiscordSettings (
+data class DiscordSettings(
     val discordToken: String = "token",
     val prefix: String = "s!",
     val emergencyNotificationsForAdmins: Boolean = true,
