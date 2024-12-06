@@ -19,6 +19,7 @@ abstract class Command {
     private var initialized: Boolean = false
     private val arguments: ArrayList<Argument> = ArrayList()
     private val captureRegex = Regex("""(['"])((?:\\\1|.)+?)\1|([^\s"']+)""")
+
     /**
      * Initialize the command with the JDA instance
      * This really shouldn't be called directly, but rather through CommandListener which handles the exception and command loading
@@ -27,8 +28,10 @@ abstract class Command {
      */
     protected fun initialize(jda: JDA) {
         if (initialized) {
-            val commandName= getFirstArgument()?.getName()
-            throw CommandInitializationException("Command "+ (commandName ?: "MALFORMED_COMMAND" )+ " already initialized")
+            val commandName = getFirstArgument()?.getName()
+            throw CommandInitializationException(
+                "Command " + (commandName ?: "MALFORMED_COMMAND") + " already initialized"
+            )
         }
         val firstArgument = getFirstArgument()
             ?: throw CommandInitializationException("Command must have at least one argument")
@@ -37,9 +40,10 @@ abstract class Command {
             addOption(slashCommandData, it)
         }
         jda.upsertCommand(slashCommandData).queue()
-        category=getCategory()
+        category = getCategory()
         initialized = true
     }
+
     /**
      * Add an argument to the command
      * @param argument The argument to add
@@ -58,26 +62,32 @@ abstract class Command {
         if (arguments.isNotEmpty() && argument.getType() == ArgumentType.COMMAND) {
             throw CommandInitializationException("Command argument must be the first argument")
         }
-        if (arguments.size>=26) { // 25 arguments + 1 command
+        if (arguments.size >= 26) { // 25 arguments + 1 command
             throw CommandInitializationException("Cannot have more than 25 arguments")
         }
-        if (arguments.stream().anyMatch{!it.getRequired()} && argument.getRequired()) {
+        if (arguments.stream().anyMatch { !it.getRequired() } && argument.getRequired()) {
             throw CommandInitializationException("Cannot have optional argument after required argument")
         }
-        if (argument.getType() == ArgumentType.SUBCOMMAND && arguments.stream().anyMatch{it.getType()!=ArgumentType.SUBCOMMAND && it.getType()!=ArgumentType.COMMAND}) {
+        if (argument.getType() == ArgumentType.SUBCOMMAND && arguments.stream()
+                .anyMatch { it.getType() != ArgumentType.SUBCOMMAND && it.getType() != ArgumentType.COMMAND }
+        ) {
             throw CommandInitializationException("Subcommand arguments must be first")
         }
         arguments.add(argument)
     }
+
     private fun getFirstArgument(): Argument? {
         return arguments.firstOrNull()
     }
+
     fun getArguments(): List<Argument> {
         return arguments
     }
+
     fun getName(): String {
         return getFirstArgument()?.getName() ?: "MALFORMED_COMMAND"
     }
+
     protected fun parseArguments(event: SlashCommandInteractionEvent): List<ParsedArgument> {
         val roles = ArrayList<Long>()
         val users = ArrayList<Long>()
@@ -95,7 +105,7 @@ abstract class Command {
                     // Do nothing
                 }
             }
-            if (it.type!=OptionType.ATTACHMENT) {
+            if (it.type != OptionType.ATTACHMENT) {
                 val str = when (it.type) {
                     OptionType.STRING -> it.asString
                     OptionType.INTEGER -> it.asLong.toString()
@@ -123,6 +133,7 @@ abstract class Command {
         }
         return parseArguments(content, attachments, roles, users, channels)
     }
+
     protected fun parseArguments(event: MessageReceivedEvent): List<ParsedArgument> {
         val roles = ArrayList<Long>()
         val users = ArrayList<Long>()
@@ -136,31 +147,45 @@ abstract class Command {
         for (mentionedChannel in event.message.mentions.channels) {
             channels.add(mentionedChannel.idLong)
         }
-        val index = getConfig().discordSettings.prefix.length+1+(getFirstArgument()?.getName()?.length ?: 0)
-        return parseArguments(event.message.contentRaw.substring(if (index>event.message.contentRaw.length) index-1 else index), event.message.attachments, roles, users, channels)
+        val index = getConfig().discordSettings.prefix.length + 1 + (getFirstArgument()?.getName()?.length ?: 0)
+        return parseArguments(
+            event.message.contentRaw.substring(if (index > event.message.contentRaw.length) index - 1 else index),
+            event.message.attachments,
+            roles,
+            users,
+            channels
+        )
     }
+
     private fun stripSurroundingQuotes(text: String): String {
-        if (text.length<2) {
+        if (text.length < 2) {
             return text
         }
         // Check for both single and double quotes, and remove them if they are present on either end
         var start = 0
-        var end = text.length-1
-        if (text[start] == '"'  || text[start] == '\'') {
+        var end = text.length - 1
+        if (text[start] == '"' || text[start] == '\'') {
             start++
         }
         if (text[end] == '"' || text[end] == '\'') {
             end--
         }
-        return text.substring(start, end+1)
+        return text.substring(start, end + 1)
 
     }
-    private fun parseArguments(messageContent: String, attachments: Collection<Message.Attachment>, mentionedRoles: Collection<Long>, mentionedUsers: Collection<Long>, mentionedChannels: Collection<Long>): List<ParsedArgument> {
+
+    private fun parseArguments(
+        messageContent: String,
+        attachments: Collection<Message.Attachment>,
+        mentionedRoles: Collection<Long>,
+        mentionedUsers: Collection<Long>,
+        mentionedChannels: Collection<Long>
+    ): List<ParsedArgument> {
         val parsedArguments = ArrayList<ParsedArgument>()
         val partsR = captureRegex.findAll(messageContent)
         val parts = partsR.map { stripSurroundingQuotes(it.value) }.toList().filter { it.isNotBlank() }
         var index = 0
-        if (parts.size==1 && parts[0].isEmpty()) {
+        if (parts.size == 1 && parts[0].isEmpty()) {
             index = 1
         }
         var numAttachments = 0
@@ -366,6 +391,7 @@ abstract class Command {
                             }
                         }
                     }
+
                     ArgumentType.TEXT -> { // Now treated normal as we have a regex to split the message including quotes for text
                         if (index >= parts.size) {
                             if (it.getRequired()) {
@@ -376,6 +402,7 @@ abstract class Command {
                             index++
                         }
                     }
+
                     else -> {
                         // Do nothing, this only happens with COMMAND, which is handled first before this loop
                     }
@@ -388,6 +415,7 @@ abstract class Command {
         }
         return parsedArguments
     }
+
     /**
      * Get the category of the command
      * Notably, this is only called once, so the value cannot change.
@@ -395,12 +423,14 @@ abstract class Command {
      * @return The category of the command
      */
     abstract fun getCategory(): CommandCategory
+
     /**
      * Handle a message received event
      * @see handler(event: SlashCommandInteractionEvent)
      * @param event The message received event to handle
      */
     abstract fun handler(event: MessageReceivedEvent)
+
     /**
      * Handle a slash command interaction event
      * @see handler(event: MessageReceivedEvent)
@@ -408,60 +438,118 @@ abstract class Command {
      */
     abstract fun handler(event: SlashCommandInteractionEvent)
 }
+
 enum class CommandCategory {
     ESSENTIAL,
     MODERATION,
     SETTINGS,
     UTILITY
 }
+
 //*
 // * Adds an option to the slash command data
 // * @param slashCommandData The slash command data to add the option to
 // * @param argument The argument to add as an option
 // */
 private fun addOption(slashCommandData: SlashCommandData, argument: Argument) {
-    if (argument.getName().length>32) {
-        throw CommandInitializationException("Argument name "+argument.getName()+" is too long")
+    if (argument.getName().length > 32) {
+        throw CommandInitializationException("Argument name " + argument.getName() + " is too long")
     }
-    if (argument.getDescription().length>100) {
-        throw CommandInitializationException("Argument description "+argument.getDescription()+" is too long")
+    if (argument.getDescription().length > 100) {
+        throw CommandInitializationException("Argument description " + argument.getDescription() + " is too long")
     }
     when (argument.getType()) {
         ArgumentType.INTEGER, ArgumentType.UINT, ArgumentType.UINT_OVER_ZERO -> {
-            slashCommandData.addOption(OptionType.INTEGER, argument.getName(),argument.getDescription(), argument.getRequired())
+            slashCommandData.addOption(
+                OptionType.INTEGER,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
         }
-        ArgumentType.WORD,ArgumentType.TEXT -> {
-                val optionData = OptionData(OptionType.STRING,argument.getName(),argument.getDescription(),argument.getRequired(),false)
-                argument.getChoices()?.forEach { choice ->
-                    optionData.addChoice(choice,choice)
-                }
-                slashCommandData.addOptions(optionData)
-        }
-        ArgumentType.BOOLEAN -> {
-            slashCommandData.addOption(OptionType.BOOLEAN, argument.getName(),argument.getDescription(), argument.getRequired())
-        }
-        ArgumentType.DECIMAL, ArgumentType.UDECIMAL, ArgumentType.UDECIMAL_OVER_ZERO -> {
-            slashCommandData.addOption(OptionType.NUMBER, argument.getName(),argument.getDescription(), argument.getRequired())
-        }
-        ArgumentType.USER -> {
-            slashCommandData.addOption(OptionType.USER, argument.getName(),argument.getDescription(), argument.getRequired())
-        }
-        ArgumentType.CHANNEL -> {
-            slashCommandData.addOption(OptionType.CHANNEL, argument.getName(),argument.getDescription(), argument.getRequired())
-        }
-        ArgumentType.ROLE -> {
-            slashCommandData.addOption(OptionType.ROLE, argument.getName(),argument.getDescription(), argument.getRequired())
-        }
-        ArgumentType.ATTACHMENT -> {
-            slashCommandData.addOption(OptionType.STRING, argument.getName(),argument.getDescription(), argument.getRequired())
-        }
-        ArgumentType.SUBCOMMAND -> {
-            val subCommandOptionData = OptionData(OptionType.STRING,argument.getName(),argument.getDescription(),argument.getRequired(),false)
+
+        ArgumentType.WORD, ArgumentType.TEXT -> {
+            val optionData = OptionData(
+                OptionType.STRING,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired(),
+                false
+            )
             argument.getChoices()?.forEach { choice ->
-                subCommandOptionData.addChoice(choice,choice)
+                optionData.addChoice(choice, choice)
+            }
+            slashCommandData.addOptions(optionData)
+        }
+
+        ArgumentType.BOOLEAN -> {
+            slashCommandData.addOption(
+                OptionType.BOOLEAN,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
+        }
+
+        ArgumentType.DECIMAL, ArgumentType.UDECIMAL, ArgumentType.UDECIMAL_OVER_ZERO -> {
+            slashCommandData.addOption(
+                OptionType.NUMBER,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
+        }
+
+        ArgumentType.USER -> {
+            slashCommandData.addOption(
+                OptionType.USER,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
+        }
+
+        ArgumentType.CHANNEL -> {
+            slashCommandData.addOption(
+                OptionType.CHANNEL,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
+        }
+
+        ArgumentType.ROLE -> {
+            slashCommandData.addOption(
+                OptionType.ROLE,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
+        }
+
+        ArgumentType.ATTACHMENT -> {
+            slashCommandData.addOption(
+                OptionType.STRING,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired()
+            )
+        }
+
+        ArgumentType.SUBCOMMAND -> {
+            val subCommandOptionData = OptionData(
+                OptionType.STRING,
+                argument.getName(),
+                argument.getDescription(),
+                argument.getRequired(),
+                false
+            )
+            argument.getChoices()?.forEach { choice ->
+                subCommandOptionData.addChoice(choice, choice)
             }
             slashCommandData.addOptions(subCommandOptionData)
         }
+
         else -> {
             // Do nothing, this only happens with COMMAND, which is handled first before this loop
         }
@@ -474,24 +562,28 @@ fun requireGuild(event: MessageReceivedEvent) {
     }
     throw CommandExitException("This command must be run in a guild")
 }
+
 fun requireGuild(event: SlashCommandInteractionEvent) {
-    if (event.guild!=null) {
+    if (event.guild != null) {
         return
     }
     throw CommandExitException("This command must be run in a guild")
 }
+
 fun requireUserPermission(event: MessageReceivedEvent, permission: Permission) {
     if (event.member?.hasPermission(permission) == true) {
         return
     }
     throw CommandExitException("You do not have permission to run this command")
 }
+
 fun requireUserPermission(event: SlashCommandInteractionEvent, permission: Permission) {
     if (event.member?.hasPermission(permission) == true) {
         return
     }
     throw CommandExitException("You do not have permission to run this command")
 }
+
 fun requireBotPermission(event: MessageReceivedEvent, permission: Permission) {
     requireGuild(event)
     if (event.guild.selfMember.hasPermission(permission) == true) {
@@ -499,6 +591,7 @@ fun requireBotPermission(event: MessageReceivedEvent, permission: Permission) {
     }
     throw CommandExitException("I do not have permission to run this command")
 }
+
 fun requireBotPermission(event: SlashCommandInteractionEvent, permission: Permission) {
     requireGuild(event)
     if (event.guild?.selfMember?.hasPermission(permission) == true) {
@@ -513,6 +606,7 @@ fun checkIsNotGuildOwner(event: MessageReceivedEvent, userId: Long) {
         throw CommandExitException("You cannot run this command on the guild owner")
     }
 }
+
 fun checkIsNotGuildOwner(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
     if (event.guild?.owner?.idLong == userId) {
@@ -527,6 +621,7 @@ fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
 }
+
 fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
     if (event.guild?.retrieveMemberById(userId)?.complete()?.let { event.guild!!.selfMember.canInteract(it) } == true) {
@@ -534,6 +629,7 @@ fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
 }
+
 fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
     val runningMember = event.member
@@ -543,6 +639,7 @@ fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than you")
 }
+
 fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
     val runningMember = event.member

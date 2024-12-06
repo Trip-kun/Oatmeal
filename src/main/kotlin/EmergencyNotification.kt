@@ -36,6 +36,7 @@ fun addEmergencyNotification(emergencyNotification: EmergencyNotification) {
         notificationObject.notify()
     }
 }
+
 private val config = getConfig().discordSettings
 private val sendToAdmins = config.emergencyNotificationsForAdmins
 private val sendToChannels = config.emergencyNotificationsForChannels
@@ -56,7 +57,13 @@ private val notificationThread = Thread {
                         user.openPrivateChannel().queue { channel ->
                             channel.sendMessage(notification.message).queue()
                             if (notification.longMessage != null) {
-                                channel.sendFiles(FileUpload.fromData(kotlin.io.path.createTempFile("longMessage", ".txt").toFile().apply { writeText(notification.longMessage) })).queue()
+                                channel.sendFiles(
+                                    FileUpload.fromData(
+                                        kotlin.io.path.createTempFile(
+                                            "longMessage",
+                                            ".txt"
+                                        ).toFile().apply { writeText(notification.longMessage) })
+                                ).queue()
                             }
                         }
                     }
@@ -67,7 +74,11 @@ private val notificationThread = Thread {
                     jda.getTextChannelById(channel)?.sendMessage(notification.message)?.queue()
                     if (notification.longMessage != null) {
 
-                        jda.getTextChannelById(channel)?.sendFiles(FileUpload.fromData(kotlin.io.path.createTempFile("longMessage", ".txt").toFile().apply { writeText(notification.longMessage) }))?.queue()
+                        jda.getTextChannelById(channel)?.sendFiles(
+                            FileUpload.fromData(
+                                kotlin.io.path.createTempFile("longMessage", ".txt").toFile()
+                                    .apply { writeText(notification.longMessage) })
+                        )?.queue()
                     }
                 }
             }
@@ -82,10 +93,12 @@ private val notificationThread = Thread {
         }
     }
 }
+
 fun startNotificationThread() {
     if (!notificationThread.isAlive)
-    notificationThread.start()
+        notificationThread.start()
 }
+
 fun stopNotificationThread() {
     startNotificationThread()
     stopNotificationThread = true

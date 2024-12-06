@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import tech.trip_kun.sinon.exception.CommandExitException
+
 class RemoveTimeout(private val jda: JDA) : Command() {
     init {
         val name = "removetimeout"
@@ -14,6 +15,7 @@ class RemoveTimeout(private val jda: JDA) : Command() {
         addArgument(Argument("user", "User to remove timeout", true, ArgumentType.USER, null))
         initialize(jda)
     }
+
     override fun getCategory(): CommandCategory {
         return CommandCategory.ESSENTIAL
     }
@@ -33,6 +35,7 @@ class RemoveTimeout(private val jda: JDA) : Command() {
         val embedBuilder = commonWork(author, member)
         event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
     }
+
     override fun handler(event: SlashCommandInteractionEvent) {
         requireGuild(event)
         requireBotPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
@@ -48,6 +51,7 @@ class RemoveTimeout(private val jda: JDA) : Command() {
         val embedBuilder = commonWork(author, member)
         event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
     }
+
     private fun commonWork(author: Member, member: Member): EmbedBuilder {
         val embedBuilder = EmbedBuilder()
         if (member.isTimedOut) {

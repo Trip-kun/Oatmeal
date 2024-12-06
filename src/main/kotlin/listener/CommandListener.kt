@@ -6,13 +6,16 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.reflections.Reflections
-import tech.trip_kun.sinon.*
+import tech.trip_kun.sinon.EmergencyNotification
+import tech.trip_kun.sinon.Logger
+import tech.trip_kun.sinon.addEmergencyNotification
 import tech.trip_kun.sinon.annotations.ListenerClass
 import tech.trip_kun.sinon.annotations.ListenerConstructor
 import tech.trip_kun.sinon.annotations.ListenerIntents
 import tech.trip_kun.sinon.command.Command
 import tech.trip_kun.sinon.data.DatabaseException
 import tech.trip_kun.sinon.exception.CommandExitException
+import tech.trip_kun.sinon.getConfig
 
 private lateinit var commandListener: CommandListener
 
@@ -20,6 +23,7 @@ private lateinit var commandListener: CommandListener
 @ListenerIntents(GatewayIntent.MESSAGE_CONTENT)
 class CommandListener @ListenerConstructor constructor(private val jda: JDA) : ListenerAdapter() {
     private val commands: HashMap<String, Command> = HashMap()
+
     init {
         Logger.info("CommandListener initialized")
         val reflections = Reflections("tech.trip_kun.sinon")
@@ -27,15 +31,22 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
             Logger.info("Found command: ${it.simpleName}")
             it.constructors.forEach { constructor ->
                 try {
-                   val command = constructor.newInstance(jda) as Command
+                    val command = constructor.newInstance(jda) as Command
                     commands[command.getName()] = command
                 } catch (e: Exception) {
-                    addEmergencyNotification(EmergencyNotification("Failed to load command: ${it.simpleName}", 10, e.stackTraceToString()))
+                    addEmergencyNotification(
+                        EmergencyNotification(
+                            "Failed to load command: ${it.simpleName}",
+                            10,
+                            e.stackTraceToString()
+                        )
+                    )
                 }
             }
         }
         commandListener = this
     }
+
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.author.isBot) {
             return
@@ -76,7 +87,7 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                 commands[command]!!.handler(event)
             } catch (e: CommandExitException) {
                 event.hook.sendMessage(e.message!!).queue()
-            }  catch (e: Exception) {
+            } catch (e: Exception) {
                 if (e is DatabaseException) {
                     Logger.error("Database Exception", e)
                     event.hook.sendMessage("Something went wrong with the database").queue()
@@ -94,7 +105,8 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
             }
         }
     }
-    fun getCommands(): Map<String,Command> {
+
+    fun getCommands(): Map<String, Command> {
         return commands
     }
 }
