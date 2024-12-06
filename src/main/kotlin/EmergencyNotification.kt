@@ -57,13 +57,11 @@ private val notificationThread = Thread {
                         user.openPrivateChannel().queue { channel ->
                             channel.sendMessage(notification.message).queue()
                             if (notification.longMessage != null) {
-                                channel.sendFiles(
-                                    FileUpload.fromData(
-                                        kotlin.io.path.createTempFile(
-                                            "longMessage",
-                                            ".txt"
-                                        ).toFile().apply { writeText(notification.longMessage) })
-                                ).queue()
+                                kotlin.io.path.createTempFile("longMessage", ".txt").toFile().apply {
+                                    writeText(notification.longMessage)
+                                }.apply{
+                                    channel.sendFiles(FileUpload.fromData(this)).queue()
+                                }
                             }
                         }
                     }
@@ -73,12 +71,12 @@ private val notificationThread = Thread {
                 channels.forEach { channel ->
                     jda.getTextChannelById(channel)?.sendMessage(notification.message)?.queue()
                     if (notification.longMessage != null) {
-
-                        jda.getTextChannelById(channel)?.sendFiles(
-                            FileUpload.fromData(
-                                kotlin.io.path.createTempFile("longMessage", ".txt").toFile()
-                                    .apply { writeText(notification.longMessage) })
-                        )?.queue()
+                        kotlin.io.path.createTempFile("longMessage", ".txt").toFile()
+                            .apply { writeText(notification.longMessage) }.apply {
+                            jda.getTextChannelById(channel)?.sendFiles(
+                                FileUpload.fromData(this)
+                            )?.queue()
+                        }
                     }
                 }
             }

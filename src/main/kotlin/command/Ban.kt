@@ -1,7 +1,6 @@
 package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
-import com.j256.ormlite.dao.GenericRawResults
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -48,13 +47,13 @@ class Ban(private var jda: JDA) : Command() {
     private fun handleBans() {
         var banEntryDao: Dao<BanEntry, Int>? = null
         runSQLUntilMaxTries { banEntryDao = getBanEntryDao() }
-        var bans: GenericRawResults<BanEntry>? = null
+        var bans: List<BanEntry>? = null
         runSQLUntilMaxTries {
-            if (banEntryDao != null)
-                bans = banEntryDao?.queryRaw(
-                    "SELECT * FROM bans WHERE time <= ${System.currentTimeMillis()}",
-                    banEntryDao!!.rawRowMapper
-                )
+            if (banEntryDao != null) {
+                val queryBuilder = banEntryDao?.queryBuilder()
+                queryBuilder?.where()?.le("time", System.currentTimeMillis())
+                bans = queryBuilder?.query()
+            }
         }
         bans?.forEach {
             val banEntry = it
