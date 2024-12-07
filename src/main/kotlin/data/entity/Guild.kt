@@ -18,7 +18,7 @@ class Guild(@DatabaseField(id = true) var id: Long) {
     var starboardLimit: Int = 3 // Default to 3 stars needed to go to starboard
 
     @ForeignCollectionField(eager = true)
-    var starboardEntries: Collection<StarboardEntry> = listOf()
+    var starboardEntries: Collection<StarboardEntry> = mutableListOf()
 }
 
 
