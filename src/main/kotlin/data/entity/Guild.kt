@@ -30,10 +30,6 @@ class StarboardEntry(
     @DatabaseField(canBeNull = false) val channelId: Long // The original channel id
 ) {
 
-
-
-
-
     @DatabaseField(canBeNull = false) // This is not in the constructor because it is set after the message gets sent
     var starboardMessageId: Long = 0 // The corresponding message in the starboard
 
