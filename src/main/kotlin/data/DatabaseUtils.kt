@@ -10,18 +10,17 @@ import kotlinx.coroutines.*
 import tech.trip_kun.sinon.EmergencyNotification
 import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.addEmergencyNotification
-import tech.trip_kun.sinon.data.entity.BanEntry
-import tech.trip_kun.sinon.data.entity.DatabaseInfo
-import tech.trip_kun.sinon.data.entity.Reminder
-import tech.trip_kun.sinon.data.entity.User
+import tech.trip_kun.sinon.data.entity.*
 import tech.trip_kun.sinon.getConfig
 import java.sql.SQLException
 
 private var userDao: Dao<User, Long>? = null
 private var reminderDao: Dao<Reminder, Long>? = null
 private var banEntryDao: Dao<BanEntry, Int>? = null
+private var guildDao: Dao<Guild, Long>? = null
+private var starboardEntryDao: Dao<StarboardEntry, Int>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
-private val DATABASE_VERSION = 1
+private val DATABASE_VERSION = 2
 //Complete
 //Need to make a try-3-times method to use for all database calls
 // If all 3 calls fail we throw a marked runtime exception and notify the admins
@@ -155,7 +154,14 @@ private fun loadDatabase() {
         val banEntryDao2: Dao<BanEntry, Int> = DaoManager.createDao(connectionSource, BanEntry::class.java)
         banEntryDao2.setObjectCache(true)
         banEntryDao = banEntryDao2
-
+        TableUtils.createTableIfNotExists(connectionSource, Guild::class.java)
+        val guildDao2: Dao<Guild, Long> = DaoManager.createDao(connectionSource, Guild::class.java)
+        guildDao2.setObjectCache(true)
+        guildDao = guildDao2
+        TableUtils.createTableIfNotExists(connectionSource, StarboardEntry::class.java)
+        val starboardEntryDao2: Dao<StarboardEntry, Int> = DaoManager.createDao(connectionSource, StarboardEntry::class.java)
+        starboardEntryDao2.setObjectCache(true)
+        starboardEntryDao = starboardEntryDao2
         databaseEnabled = true
         dbTries = 0
     } catch (e: SQLException) {
@@ -199,11 +205,36 @@ fun getBanEntryDao(): Dao<BanEntry, Int> {
     }
     return banEntryDao!!
 }
+
+fun getGuildDao(): Dao<Guild, Long> {
+    if (!databaseEnabled && !databaseDoNotTryAgain) {
+        runSQLUntilMaxTries { loadDatabase() }
+    }
+    if (guildDao == null) {
+        throw DatabaseException("Guild DAO is null")
+    }
+    return guildDao!!
+}
+
+fun getStarboardEntryDao(): Dao<StarboardEntry, Int> {
+    if (!databaseEnabled && !databaseDoNotTryAgain) {
+        runSQLUntilMaxTries { loadDatabase() }
+    }
+    if (starboardEntryDao == null) {
+        throw DatabaseException("StarboardEntry DAO is null")
+    }
+    return starboardEntryDao!!
+}
+
 private fun upgrade(startVersion: Int, endVersion: Int) {
     if (startVersion < endVersion) {
         when (startVersion) {
             1 -> {
                 // Upgrade from version 1 to version 2 We are currently at version 1 so we don't need to do anything
+                // There are no modifications to the database schema between version 1 and version 2, just additions of new tables
+            }
+            2 -> {
+                // Next upgrade, not yet implemented
             }
         }
         upgrade(startVersion + 1, endVersion)
