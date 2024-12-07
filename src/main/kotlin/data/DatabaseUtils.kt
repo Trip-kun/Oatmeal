@@ -18,7 +18,7 @@ private var userDao: Dao<User, Long>? = null
 private var reminderDao: Dao<Reminder, Long>? = null
 private var banEntryDao: Dao<BanEntry, Int>? = null
 private var guildDao: Dao<Guild, Long>? = null
-private var starboardEntryDao: Dao<StarboardEntry, Int>? = null
+private var starboardEntryDao: Dao<StarboardEntry, Long>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
 private val DATABASE_VERSION = 2
 //Complete
@@ -159,7 +159,7 @@ private fun loadDatabase() {
         guildDao2.setObjectCache(true)
         guildDao = guildDao2
         TableUtils.createTableIfNotExists(connectionSource, StarboardEntry::class.java)
-        val starboardEntryDao2: Dao<StarboardEntry, Int> = DaoManager.createDao(connectionSource, StarboardEntry::class.java)
+        val starboardEntryDao2: Dao<StarboardEntry, Long> = DaoManager.createDao(connectionSource, StarboardEntry::class.java)
         starboardEntryDao2.setObjectCache(true)
         starboardEntryDao = starboardEntryDao2
         databaseEnabled = true
@@ -216,7 +216,7 @@ fun getGuildDao(): Dao<Guild, Long> {
     return guildDao!!
 }
 
-fun getStarboardEntryDao(): Dao<StarboardEntry, Int> {
+fun getStarboardEntryDao(): Dao<StarboardEntry, Long> {
     if (!databaseEnabled && !databaseDoNotTryAgain) {
         runSQLUntilMaxTries { loadDatabase() }
     }

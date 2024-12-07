@@ -51,7 +51,7 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
             } catch (e: Exception) {
                 addEmergencyNotification(
                     EmergencyNotification(
-                        "Command Exception: ${command}",
+                        "Command Exception: $command",
                         10,
                         e.stackTraceToString()
                     )
@@ -71,7 +71,7 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
             } catch (e: Exception) {
                 addEmergencyNotification(
                     EmergencyNotification(
-                        "Command Exception: ${command}",
+                        "Command Exception: $command",
                         10,
                         e.stackTraceToString()
                     )
