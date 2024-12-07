@@ -26,8 +26,8 @@ class Guild(@DatabaseField(id = true) var id: Long) {
 @DatabaseTable(tableName = "starboard_entries")
 class StarboardEntry(
     @DatabaseField(foreign = true, canBeNull=false) var guild: Guild,
-    @DatabaseField(id = true) val messageId: Long, // The original message id
-    @DatabaseField(canBeNull = false) val channelId: Long // The original channel id
+    @DatabaseField(id = true) var messageId: Long, // The original message id
+    @DatabaseField(canBeNull = false) var channelId: Long // The original channel id
 ) {
 
     @DatabaseField(canBeNull = false) // This is not in the constructor because it is set after the message gets sent
