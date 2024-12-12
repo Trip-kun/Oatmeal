@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Member
@@ -26,14 +27,13 @@ class RemoveTimeout(private val jda: JDA) : Command() {
         requireUserPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val user = jda.retrieveUserById(userId).complete() ?: throw CommandExitException("Invalid arguments")
+        val user = try { jda.retrieveUserById(userId).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") }?: throw CommandExitException("Invalid arguments")
         val guild = event.guild
-        val member = guild.retrieveMember(user).complete() ?: throw CommandExitException("Invalid arguments")
-        val author = event.member ?: throw CommandExitException("Invalid arguments")
+        val member = try { guild.retrieveMember(user).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") }?: throw CommandExitException("Invalid arguments")
         checkUserHierarchy(event, member.idLong)
         checkHierarchy(event, member.idLong)
-        val embedBuilder = commonWork(author, member)
-        event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
+        val embedBuilder = commonWork(member)
+        event.channel.sendMessageEmbeds(embedBuilder.build()).await()
     }
 
     override suspend fun handler(event: SlashCommandInteractionEvent) {
@@ -42,20 +42,19 @@ class RemoveTimeout(private val jda: JDA) : Command() {
         requireUserPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val user = jda.retrieveUserById(userId).complete() ?: throw CommandExitException("Invalid arguments")
+        val user = try { jda.retrieveUserById(userId).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") }?: throw CommandExitException("Invalid arguments")
         val guild = event.guild
-        val member = guild?.retrieveMember(user)?.complete() ?: throw CommandExitException("Invalid arguments")
-        val author = event.member ?: throw CommandExitException("Invalid arguments")
+        val member = try { guild?.retrieveMember(user)?.await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") }?: throw CommandExitException("Invalid arguments")
         checkUserHierarchy(event, member.idLong)
         checkHierarchy(event, member.idLong)
-        val embedBuilder = commonWork(author, member)
-        event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
+        val embedBuilder = commonWork(member)
+        event.hook.sendMessageEmbeds(embedBuilder.build()).await()
     }
 
-    private fun commonWork(author: Member, member: Member): EmbedBuilder {
+    private suspend fun commonWork(member: Member): EmbedBuilder {
         val embedBuilder = EmbedBuilder()
         if (member.isTimedOut) {
-            member.removeTimeout().queue()
+            member.removeTimeout().await()
             embedBuilder.setTitle("Removed timeout for ${member.effectiveName}")
         } else {
             embedBuilder.setTitle("${member.effectiveName} is not timed out")

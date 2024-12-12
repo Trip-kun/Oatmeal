@@ -28,7 +28,7 @@ import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 
 private val starboardListenerCoroutineScope = CoroutineScope(getDispatcher())
 @ListenerClass
-@ListenerIntents(GatewayIntent.GUILD_MESSAGE_REACTIONS)
+@ListenerIntents(GUILD_MESSAGE_REACTIONS)
 @ListenerIntents(MESSAGE_CONTENT)
 class StarboardListener @ListenerConstructor constructor(private val jda: JDA): ListenerAdapter() {
     init {
@@ -118,7 +118,11 @@ private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, mes
                 starboardEntry!!.starboardMessageId = starboardMessage.idLong
             } else {
                 val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
-                starboardMessage.editMessageEmbeds(embed.build()).queue()
+                try {
+                    starboardMessage.editMessageEmbeds(embed.build()).await()
+                } catch (e: Exception) {
+                    Logger.error("Failed to edit starboard message", e)
+                }
             }
         }
         runSQLUntilMaxTries {
@@ -126,7 +130,11 @@ private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, mes
         }
     } else {
         if (starboardEntry!!.starboardMessageId != 0L) {
-            channel.deleteMessageById(starboardEntry!!.starboardMessageId).queue()
+            try {
+                channel.deleteMessageById(starboardEntry!!.starboardMessageId).await()
+            } catch (e: Exception) {
+                Logger.error("Failed to delete starboard message", e)
+            }
             starboardEntry!!.starboardMessageId = 0
             runSQLUntilMaxTries {
                 starboardEntryDao?.createOrUpdate(starboardEntry)

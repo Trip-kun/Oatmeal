@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -44,7 +45,8 @@ class Help(private val jda: JDA) : Command() {
         if (embedBuilder == null) {
             throw CommandExitException("Invalid arguments")
         }
-        event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
+
+        event.channel.sendMessageEmbeds(embedBuilder.build()).await()
     }
 
     override suspend fun handler(event: SlashCommandInteractionEvent) {
@@ -71,7 +73,7 @@ class Help(private val jda: JDA) : Command() {
             throw CommandExitException("Invalid arguments")
         }
 
-        event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
+        event.hook.sendMessageEmbeds(embedBuilder.build()).await()
     }
     private suspend fun commonWork(command: String?, page: Int?): EmbedBuilder {
         if (command != null && page != null && command.isNotBlank()) {

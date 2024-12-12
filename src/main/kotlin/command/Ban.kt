@@ -65,9 +65,14 @@ class Ban(private var jda: JDA): Command() {
             val banEntry = it
             val guild = jda.getGuildById(it.guildId)
             if (guild != null) {
-                val user = jda.retrieveUserById(banEntry.userId).await()
+                val user =  try { jda.retrieveUserById(banEntry.userId).await() } catch (e: Exception) { null }
                 if (user != null) {
-                    guild.unban(user).queue()
+                    try {
+                        guild.unban(user).await()
+                    } catch (e: Exception) {
+                        return@forEach
+                        // Do nothing, but skip the rest of the code so we don't delete the ban entry
+                    }
                 }
             }
             runSQLUntilMaxTries { banEntryDao?.delete(banEntry) }
@@ -83,8 +88,8 @@ class Ban(private var jda: JDA): Command() {
         requireBotPermission(event, Permission.BAN_MEMBERS)
         requireUserPermission(event, Permission.BAN_MEMBERS)
         val arguments = parseArguments(event)
-        val userToBeBannedId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val userToBeBanned = jda.retrieveUserById(userToBeBannedId).await() ?: throw CommandExitException("User not found")
+        val userToBeBannedId = try { arguments[0].getLongValue() } catch (e: IndexOutOfBoundsException) {throw CommandExitException("Invalid Arguments")} ?: throw CommandExitException("Invalid arguments") // Shouldn't occur because of the check in parseArguments
+        val userToBeBanned =  try { jda.retrieveUserById(userToBeBannedId).await() } catch (e: Exception) { throw CommandExitException("User not found") }
         checkHierarchy(event, userToBeBanned.idLong)
         checkUserHierarchy(event, userToBeBanned.idLong)
         if (userToBeBannedId == event.author.idLong) {
@@ -106,7 +111,7 @@ class Ban(private var jda: JDA): Command() {
             reason = arguments[3].getStringValue() ?: ""
         }
         commonWork(userToBeBanned, event.author, event.guild, reason, clearTime, expiry)
-        event.channel.sendMessage("User has been banned").queue()
+        event.channel.sendMessage("User has been banned").await()
 
 
     }
@@ -116,8 +121,8 @@ class Ban(private var jda: JDA): Command() {
         requireBotPermission(event, Permission.BAN_MEMBERS)
         requireUserPermission(event, Permission.BAN_MEMBERS)
         val arguments = parseArguments(event)
-        val userToBeBannedId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val userToBeBanned = jda.retrieveUserById(userToBeBannedId).await() ?: throw CommandExitException("User not found")
+        val userToBeBannedId = try { arguments[0].getLongValue() } catch (e: IndexOutOfBoundsException) {throw CommandExitException("Invalid Arguments")} ?: throw CommandExitException("Invalid arguments") // Shouldn't occur because of the check in parseArguments
+        val userToBeBanned =  try { jda.retrieveUserById(userToBeBannedId).await() } catch (e: Exception) { throw CommandExitException("User not found") }
         checkHierarchy(event, userToBeBanned.idLong)
         checkUserHierarchy(event, userToBeBanned.idLong)
         if (userToBeBannedId == event.user.idLong) {
@@ -139,7 +144,7 @@ class Ban(private var jda: JDA): Command() {
             reason = arguments[3].getStringValue() ?: ""
         }
         event.guild?.let { commonWork(userToBeBanned, event.user, it, reason, clearTime, expiry) }
-        event.hook.sendMessage("User has been banned").queue()
+        event.hook.sendMessage("User has been banned").await()
 
     }
     private suspend fun commonWork(userToBeBanned: User, userBanning: User, guild: Guild, reason: String?, clearTime: Int, expiry: String) {
@@ -166,6 +171,6 @@ class Ban(private var jda: JDA): Command() {
             bannedBy = userBanning.idLong
         }
         runSQLUntilMaxTries { getBanEntryDao().createOrUpdate(banEntry) }
-        guild.ban(userToBeBanned, clearTime, TimeUnit.HOURS).queue()
+        guild.ban(userToBeBanned, clearTime, TimeUnit.HOURS).await()
     }
 }

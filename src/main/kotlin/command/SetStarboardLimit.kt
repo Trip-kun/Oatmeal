@@ -1,6 +1,7 @@
 package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
@@ -28,7 +29,7 @@ class SetStarboardLimit(private val jda: JDA): Command() {
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
         val limit = arguments[0].getIntValue() ?: throw CommandExitException("Invalid arguments") // Exception should not be called but just in case
-        event.channel.sendMessageEmbeds(commonWork(event.guild, limit).build()).queue()
+        event.channel.sendMessageEmbeds(commonWork(event.guild, limit).build()).await()
     }
 
     override suspend fun handler(event: SlashCommandInteractionEvent) {
@@ -36,7 +37,7 @@ class SetStarboardLimit(private val jda: JDA): Command() {
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
         val limit = arguments[0].getIntValue() ?: throw CommandExitException("Invalid arguments") // Exception should not be called but just in case
-        event.hook.sendMessageEmbeds(commonWork(event.guild, limit).build()).queue()
+        event.hook.sendMessageEmbeds(commonWork(event.guild, limit).build()).await()
     }
     private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild?, limit: Int): EmbedBuilder {
         var guildDao: Dao<Guild, Long>? = null

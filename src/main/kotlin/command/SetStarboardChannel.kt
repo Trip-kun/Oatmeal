@@ -1,6 +1,7 @@
 package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
@@ -38,10 +39,10 @@ class SetStarboardChannel(private val jda: JDA) : Command() {
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
         if (arguments.isEmpty()) {
-            event.channel.sendMessageEmbeds(commonWork(event.guild, null).build()).queue()
+            event.channel.sendMessageEmbeds(commonWork(event.guild, null).build()).await()
         } else {
             val channel = arguments[0].getLongValue()?.let { event.guild.getTextChannelById(it) }
-            event.channel.sendMessageEmbeds(commonWork(event.guild, channel).build()).queue()
+            event.channel.sendMessageEmbeds(commonWork(event.guild, channel).build()).await()
         }
     }
 
@@ -50,10 +51,10 @@ class SetStarboardChannel(private val jda: JDA) : Command() {
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
         if (arguments.isEmpty()) {
-            event.hook.sendMessageEmbeds(commonWork(event.guild, null).build()).queue()
+            event.hook.sendMessageEmbeds(commonWork(event.guild, null).build()).await()
         } else {
             val channel = arguments[0].getLongValue()?.let { event.guild?.getTextChannelById(it) }
-            event.hook.sendMessageEmbeds(commonWork(event.guild, channel).build()).queue()
+            event.hook.sendMessageEmbeds(commonWork(event.guild, channel).build()).await()
         }
     }
 

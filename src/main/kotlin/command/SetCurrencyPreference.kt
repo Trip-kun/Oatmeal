@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -39,8 +40,7 @@ class SetCurrencyPreference(private val jda: JDA) : Command() {
         } catch (e: DatabaseException) {
             throw CommandExitException("Sorry, I couldn't save your preference. Please try again later. (my developers have been notified)")
         }
-        event.channel.sendMessage("Currency notifications for you have been ${if (enabled) "enabled" else "disabled"}")
-            .queue()
+        event.channel.sendMessage("Currency notifications for you have been ${if (enabled) "enabled" else "disabled"}").await()
     }
 
     override suspend fun handler(event: SlashCommandInteractionEvent) {
@@ -57,8 +57,7 @@ class SetCurrencyPreference(private val jda: JDA) : Command() {
         } catch (e: DatabaseException) {
             throw CommandExitException("Sorry, I couldn't save your preference. Please try again later. (my developers have been notified)")
         }
-        event.hook.sendMessage("Currency notifications for you have been ${if (enabled) "enabled" else "disabled"}")
-            .queue()
+        event.hook.sendMessage("Currency notifications for you have been ${if (enabled) "enabled" else "disabled"}").await()
     }
 
 }

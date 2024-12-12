@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.User
@@ -35,7 +36,7 @@ class SetTimezone(private val jda: JDA) : Command() {
         val user = event.author
         val embedBuilders = commonWork(user, timezone)
         for (embedBuilder in embedBuilders) {
-            event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
+            event.channel.sendMessageEmbeds(embedBuilder.build()).await()
         }
     }
 
@@ -51,7 +52,7 @@ class SetTimezone(private val jda: JDA) : Command() {
         val user = event.user
         val embedBuilders = commonWork(user, timezone)
         for (embedBuilder in embedBuilders) {
-            event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
+            event.hook.sendMessageEmbeds(embedBuilder.build()).await()
         }
     }
 

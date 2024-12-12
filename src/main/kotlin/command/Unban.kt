@@ -31,10 +31,10 @@ class Unban(private val jda: JDA) : Command() {
         val arguments = parseArguments(event)
         val userIdString = arguments[0].getStringValue() ?: throw CommandExitException("Invalid arguments")
         val userId = userIdString.toLongOrNull() ?: throw CommandExitException("Invalid arguments")
-        val user = jda.retrieveUserById(userId).await() ?: throw CommandExitException("Invalid arguments")
+        val user = try { jda.retrieveUserById(userId).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments")} ?: throw CommandExitException("Invalid arguments")
         val guild = event.guild
-        guild.unban(user).queue()
-        event.channel.sendMessage("Unbanned ${user.asMention}").queue()
+        guild.unban(user).await()
+        event.channel.sendMessage("Unbanned ${user.asMention}").await()
         runSQLUntilMaxTries {
             val banEntryDao: Dao<BanEntry, Int> = getBanEntryDao()
             val banEntries = banEntryDao.queryBuilder()
@@ -53,10 +53,10 @@ class Unban(private val jda: JDA) : Command() {
         requireUserPermission(event, Permission.BAN_MEMBERS)
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val user = jda.retrieveUserById(userId).await() ?: throw CommandExitException("Invalid arguments")
+        val user = try { jda.retrieveUserById(userId).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments")} ?: throw CommandExitException("Invalid arguments")
         val guild = event.guild
-        guild?.unban(user)?.queue()
-        event.hook.sendMessage("Unbanned ${user.asMention}").queue()
+        guild?.unban(user)?.await()
+        event.hook.sendMessage("Unbanned ${user.asMention}").await()
         runSQLUntilMaxTries {
             val banEntryDao: Dao<BanEntry, Int> = getBanEntryDao()
             val query = banEntryDao.queryBuilder().where()

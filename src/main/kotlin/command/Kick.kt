@@ -26,7 +26,7 @@ class Kick(private var jda: JDA) : Command() {
         requireUserPermission(event, Permission.KICK_MEMBERS)
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val user = jda.retrieveUserById(userId).await() ?: throw CommandExitException("Invalid arguments")
+        val user = try { jda.retrieveUserById(userId).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") } ?: throw CommandExitException("Invalid arguments")
         checkHierarchy(event, user.idLong)
         checkUserHierarchy(event, user.idLong)
         if (userId == event.author.idLong) {
@@ -36,10 +36,10 @@ class Kick(private var jda: JDA) : Command() {
             throw CommandExitException("You cannot kick me using this command")
         }
         val guild = event.guild
-        val member = guild.retrieveMember(user).await() ?: throw CommandExitException("Invalid arguments")
+        val member = try { guild.retrieveMember(user).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") } ?: throw CommandExitException("Invalid arguments")
         checkIsNotGuildOwner(event, member.idLong)
-        member.kick().queue()
-        event.channel.sendMessage("Kicked ${member.effectiveName}").queue()
+        member.kick().await()
+        event.channel.sendMessage("Kicked ${member.effectiveName}").await()
     }
 
     override suspend fun handler(event: SlashCommandInteractionEvent) {
@@ -48,7 +48,7 @@ class Kick(private var jda: JDA) : Command() {
         requireUserPermission(event, Permission.KICK_MEMBERS)
         val arguments = parseArguments(event)
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val user = jda.retrieveUserById(userId).await() ?: throw CommandExitException("Invalid arguments")
+        val user = try { jda.retrieveUserById(userId).await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") } ?: throw CommandExitException("Invalid arguments")
         checkHierarchy(event, user.idLong)
         checkUserHierarchy(event, user.idLong)
         if (userId == event.user.idLong) {
@@ -58,9 +58,9 @@ class Kick(private var jda: JDA) : Command() {
             throw CommandExitException("You cannot kick me using this command")
         }
         val guild = event.guild
-        val member = guild?.retrieveMember(user)?.await() ?: throw CommandExitException("Invalid arguments")
+        val member = try { guild?.retrieveMember(user)?.await() } catch (e: Exception) { throw CommandExitException("Invalid arguments") } ?: throw CommandExitException("Invalid arguments")
         checkIsNotGuildOwner(event, member.idLong)
-        member.kick().queue()
-        event.hook.sendMessage("Kicked ${member.effectiveName}").queue()
+        member.kick().await()
+        event.hook.sendMessage("Kicked ${member.effectiveName}").await()
     }
 }

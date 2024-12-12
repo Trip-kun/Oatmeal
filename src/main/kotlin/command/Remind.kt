@@ -61,14 +61,18 @@ class Remind(private val jda: JDA): Command() {
         }
         reminders?.forEach {
             val user = it.user
-            val channel = jda.retrieveUserById(user.id).await()?.openPrivateChannel()?.await()
+            val channel = try { jda.retrieveUserById(user.id).await()?.openPrivateChannel()?.await() } catch (e: Exception) { null } // Can't throw exception here as this isn't a command handler
             if (it.reminder.length>2000) {
                 // Split the message into multiple messages
                 val message = "I am here to remind you of: ${it.reminder}"
                 var start = 0
                 var end = 2000
                 while (start < message.length) {
-                    channel?.sendMessage(message.substring(start, end))?.queue()
+                    try {
+                        channel?.sendMessage(message.substring(start, end))?.await()
+                    } catch (e: Exception) {
+                        return@forEach // If we can't send the message, we don't want to delete the reminder
+                    }
                     start = end
                     end += 2000
                     if (end > message.length) {
@@ -76,7 +80,11 @@ class Remind(private val jda: JDA): Command() {
                     }
                 }
             } else {
-                channel?.sendMessage("I am here to remind you of: ${it.reminder}")?.queue()
+                try {
+                    channel?.sendMessage("I am here to remind you of: ${it.reminder}")?.await()
+                } catch (e: Exception) {
+                    return@forEach // If we can't send the message, we don't want to delete the reminder
+                }
             }
             runSQLUntilMaxTries { reminderDao?.delete(it) }
 
@@ -116,7 +124,7 @@ class Remind(private val jda: JDA): Command() {
                 heldUser.user = User(event.author.idLong)
             }
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
-            event.channel.sendMessage(message).queue()
+            event.channel.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         } else {
             val heldUser = HeldUser()
@@ -125,7 +133,7 @@ class Remind(private val jda: JDA): Command() {
                 heldUser.user = User(event.author.idLong)
             }
             val message = commonWork(durationIn, null, reminder, heldUser.user!!)
-            event.channel.sendMessage(message).queue()
+            event.channel.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         }
     }
@@ -159,7 +167,7 @@ class Remind(private val jda: JDA): Command() {
                 heldUser.user = User(event.user.idLong)
             }
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
-            event.hook.sendMessage(message).queue()
+            event.hook.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         } else {
             val heldUser = HeldUser()
@@ -168,7 +176,7 @@ class Remind(private val jda: JDA): Command() {
                 heldUser.user = User(event.user.idLong)
             }
             val message = commonWork(durationIn, null, reminder, heldUser.user!!)
-            event.hook.sendMessage(message).queue()
+            event.hook.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         }
     }
