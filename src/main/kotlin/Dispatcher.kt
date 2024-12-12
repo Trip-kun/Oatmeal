@@ -8,6 +8,6 @@ private val dispatcher = threadPool.asCoroutineDispatcher()
 fun getDispatcher() = dispatcher
 
 fun shutdownDispatcher() {
+    threadPool.shutdownNow()
     threadPool.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS)
-    threadPool.shutdown()
 }
