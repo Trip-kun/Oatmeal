@@ -27,16 +27,18 @@ import tech.trip_kun.sinon.data.getStarboardEntryDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 
 private val starboardListenerCoroutineScope = CoroutineScope(getDispatcher())
+
 @ListenerClass
 @ListenerIntents(GUILD_MESSAGE_REACTIONS)
 @ListenerIntents(MESSAGE_CONTENT)
-class StarboardListener @ListenerConstructor constructor(private val jda: JDA): ListenerAdapter() {
+class StarboardListener @ListenerConstructor constructor(private val jda: JDA) : ListenerAdapter() {
     init {
         Logger.info("StarboardListener initialized")
     }
+
     override fun onMessageReactionRemoveEmoji(event: MessageReactionRemoveEmojiEvent) {
         if (!event.isFromGuild) return
-        val guildChannel  = event.guildChannel
+        val guildChannel = event.guildChannel
         starboardListenerCoroutineScope.launch {
             val message = guildChannel.retrieveMessageById(event.messageId).await()
             commonWork(event.guild, message)
@@ -45,7 +47,7 @@ class StarboardListener @ListenerConstructor constructor(private val jda: JDA): 
 
     override fun onMessageReactionRemoveAll(event: MessageReactionRemoveAllEvent) {
         if (!event.isFromGuild) return
-        val guildChannel  = event.guildChannel
+        val guildChannel = event.guildChannel
         starboardListenerCoroutineScope.launch {
             val message = guildChannel.retrieveMessageById(event.messageId).await()
             commonWork(event.guild, message)
@@ -54,13 +56,12 @@ class StarboardListener @ListenerConstructor constructor(private val jda: JDA): 
 
     override fun onGenericMessageReaction(event: GenericMessageReactionEvent) {
         if (!event.isFromGuild) return
-        val guildChannel  = event.guildChannel
+        val guildChannel = event.guildChannel
         starboardListenerCoroutineScope.launch {
             val message = guildChannel.retrieveMessageById(event.messageId).await()
             commonWork(event.guild, message)
         }
     }
-
 
 
 }
@@ -101,28 +102,29 @@ private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, mes
     }
     var count = 0
     message.reactions
-        .filter {it.emoji.type== Emoji.Type.UNICODE && it.emoji.asUnicode() == Emoji.fromUnicode("⭐") }
+        .filter { it.emoji.type == Emoji.Type.UNICODE && it.emoji.asUnicode() == Emoji.fromUnicode("⭐") }
         .forEach {
             count = it.count
         }
     if (count >= guild!!.starboardLimit) {
-        if (starboardEntry!!.starboardMessageId == 0L) {
-            var starboardMessage = try {
+        var starboardMessage: Message? = null
+        if (starboardEntry!!.starboardMessageId != 0L) {
+            starboardMessage = try {
                 channel.retrieveMessageById(starboardEntry!!.starboardMessageId).await()
             } catch (e: ErrorResponseException) {
                 null
             }
-            if (starboardMessage == null) {
-                val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
-                starboardMessage = channel.sendMessageEmbeds(embed.build()).await()
-                starboardEntry!!.starboardMessageId = starboardMessage.idLong
-            } else {
-                val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
-                try {
-                    starboardMessage.editMessageEmbeds(embed.build()).await()
-                } catch (e: Exception) {
-                    Logger.error("Failed to edit starboard message", e)
-                }
+        }
+        if (starboardMessage == null) {
+            val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
+            starboardMessage = channel.sendMessageEmbeds(embed.build()).await()
+            starboardEntry!!.starboardMessageId = starboardMessage.idLong
+        } else {
+            val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
+            try {
+                starboardMessage.editMessageEmbeds(embed.build()).await()
+            } catch (e: Exception) {
+                Logger.error("Failed to edit starboard message", e)
             }
         }
         runSQLUntilMaxTries {
