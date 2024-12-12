@@ -2,25 +2,29 @@ package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.dao.GenericRawResults
+import dev.minn.jda.ktx.coroutines.await
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import org.apache.commons.logging.Log
+import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
 import tech.trip_kun.sinon.data.getReminderDao
 import tech.trip_kun.sinon.data.getUserDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 import tech.trip_kun.sinon.exception.CommandExitException
+import tech.trip_kun.sinon.getDispatcher
 import java.text.DateFormat
 import java.time.Instant
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
-
-class Remind(private val jda: JDA) : Command() {
-    private var timerTask: TimerTask
-    private val timer = Timer()
+private val remindCoroutineScope = CoroutineScope(getDispatcher())
+class Remind(private val jda: JDA): Command() {
 
     init {
         addArgument(Argument("remind", "Sets a reminder for the future", true, ArgumentType.COMMAND, null))
@@ -36,15 +40,18 @@ class Remind(private val jda: JDA) : Command() {
         )
         addArgument(Argument("time", "The time to remind you at (remind me in X at Y)", false, ArgumentType.TEXT, null))
         initialize(jda)
-        timerTask = object : TimerTask() {
-            override fun run() {
-                handleReminders()
+        remindCoroutineScope.launch {
+            while (true) {
+                try {
+                    handleReminders()
+                } catch (e: Exception) {
+                   Logger.error("Reminder handling failed: ${e.message}", e) 
+                } 
+                kotlinx.coroutines.delay(30000)
             }
         }
-        timer.schedule(timerTask, 0, 30 * 1000)
     }
-
-    private fun handleReminders() {
+    private suspend fun handleReminders() {
         var reminderDao: Dao<Reminder, Long>? = null
         runSQLUntilMaxTries { reminderDao = getReminderDao() }
         val now = System.currentTimeMillis()
@@ -56,14 +63,19 @@ class Remind(private val jda: JDA) : Command() {
         }
         reminders?.forEach {
             val user = it.user
-            val channel = jda.retrieveUserById(user.id).complete()?.openPrivateChannel()?.complete()
-            if (it.reminder.length > 2000) {
+            val channel = try { jda.retrieveUserById(user.id).await()?.openPrivateChannel()?.await() } catch (e: Exception) { null } // Can't throw exception here as this isn't a command handler
+            if (it.reminder.length>2000) {
                 // Split the message into multiple messages
                 val message = "I am here to remind you of: ${it.reminder}"
                 var start = 0
                 var end = 2000
                 while (start < message.length) {
-                    channel?.sendMessage(message.substring(start, end))?.queue()
+                    try {
+                        channel?.sendMessage(message.substring(start, end))?.await()
+                    } catch (e: Exception) {
+                        Logger.error("Failed to send reminder message: ${e.message}")
+                        return@forEach // If we can't send the message, we don't want to delete the reminder
+                    }
                     start = end
                     end += 2000
                     if (end > message.length) {
@@ -71,7 +83,12 @@ class Remind(private val jda: JDA) : Command() {
                     }
                 }
             } else {
-                channel?.sendMessage("I am here to remind you of: ${it.reminder}")?.queue()
+                try {
+                    channel?.sendMessage("I am here to remind you of: ${it.reminder}")?.await()
+                } catch (e: Exception) {
+                    Logger.error("Failed to send reminder message: ${e.message}")
+                    return@forEach // If we can't send the message, we don't want to delete the reminder
+                }
             }
             runSQLUntilMaxTries { reminderDao?.delete(it) }
 
@@ -82,7 +99,7 @@ class Remind(private val jda: JDA) : Command() {
         return CommandCategory.UTILITY
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
         if (arguments.size < 2) {
             throw CommandExitException("Invalid arguments")
@@ -111,7 +128,7 @@ class Remind(private val jda: JDA) : Command() {
                 heldUser.user = User(event.author.idLong)
             }
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
-            event.channel.sendMessage(message).queue()
+            event.channel.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         } else {
             val heldUser = HeldUser()
@@ -120,12 +137,12 @@ class Remind(private val jda: JDA) : Command() {
                 heldUser.user = User(event.author.idLong)
             }
             val message = commonWork(durationIn, null, reminder, heldUser.user!!)
-            event.channel.sendMessage(message).queue()
+            event.channel.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         }
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         val arguments = parseArguments(event)
         if (arguments.size < 2) {
             throw CommandExitException("Invalid arguments")
@@ -154,7 +171,7 @@ class Remind(private val jda: JDA) : Command() {
                 heldUser.user = User(event.user.idLong)
             }
             val message = commonWork(durationIn, time, reminder, heldUser.user!!)
-            event.hook.sendMessage(message).queue()
+            event.hook.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         } else {
             val heldUser = HeldUser()
@@ -163,7 +180,7 @@ class Remind(private val jda: JDA) : Command() {
                 heldUser.user = User(event.user.idLong)
             }
             val message = commonWork(durationIn, null, reminder, heldUser.user!!)
-            event.hook.sendMessage(message).queue()
+            event.hook.sendMessage(message).await()
             runSQLUntilMaxTries { getUserDao().createOrUpdate(heldUser.user) }
         }
     }
@@ -171,8 +188,7 @@ class Remind(private val jda: JDA) : Command() {
     private class HeldUser {
         var user: User? = null
     }
-
-    private fun commonWork(duration: String, time: String?, reminder: String, user: User): String {
+    private suspend fun commonWork(duration: String, time: String?, reminder: String, user: User):String {
         try {
             var unixTime: Long
             try {

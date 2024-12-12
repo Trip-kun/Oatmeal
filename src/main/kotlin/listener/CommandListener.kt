@@ -1,24 +1,24 @@
 package tech.trip_kun.sinon.listeners
 
+import dev.minn.jda.ktx.coroutines.await
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.reflections.Reflections
-import tech.trip_kun.sinon.EmergencyNotification
-import tech.trip_kun.sinon.Logger
-import tech.trip_kun.sinon.addEmergencyNotification
+import tech.trip_kun.sinon.*
 import tech.trip_kun.sinon.annotations.ListenerClass
 import tech.trip_kun.sinon.annotations.ListenerConstructor
 import tech.trip_kun.sinon.annotations.ListenerIntents
 import tech.trip_kun.sinon.command.Command
 import tech.trip_kun.sinon.data.DatabaseException
 import tech.trip_kun.sinon.exception.CommandExitException
-import tech.trip_kun.sinon.getConfig
 
 private lateinit var commandListener: CommandListener
-
+private val commandListenerCoroutineScope = CoroutineScope(getDispatcher())
 @ListenerClass
 @ListenerIntents(GatewayIntent.MESSAGE_CONTENT)
 class CommandListener @ListenerConstructor constructor(private val jda: JDA) : ListenerAdapter() {
@@ -51,26 +51,40 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
         if (event.author.isBot) {
             return
         }
-        val message = event.message.contentRaw
-        if (message.startsWith(getConfig().discordSettings.prefix)) {
-            val command = message.substring(getConfig().discordSettings.prefix.length).split(" ")[0]
+        commandListenerCoroutineScope.launch {
             try {
-                if (commands.containsKey(command)) {
-                    commands[command]!!.handler(event)
+                val message = event.message.contentRaw
+                if (message.startsWith(getConfig().discordSettings.prefix)) {
+                    val command = message.substring(getConfig().discordSettings.prefix.length).split(" ")[0]
+                    try {
+                        if (commands.containsKey(command)) {
+                            commands[command]!!.handler(event)
+                        }
+                    } catch (e: CommandExitException) {
+                        event.channel.sendMessage(e.message!!).await()
+                    } catch (e: Exception) {
+                        if (e is DatabaseException) {
+                            Logger.error("Database Exception", e)
+                            event.channel.sendMessage("Something went wrong with the database").await()
+                        } else {
+                            Logger.error("Command Exception: ${command}", e)
+                            event.channel.sendMessage("Something went wrong").await()
+                        }
+                        addEmergencyNotification(
+                            EmergencyNotification(
+                                "Command Exception: $command",
+                                10,
+                                e.stackTraceToString()
+                            )
+                        )
+                    }
                 }
-            } catch (e: CommandExitException) {
-                event.channel.sendMessage(e.message!!).queue()
             } catch (e: Exception) {
-                if (e is DatabaseException) {
-                    Logger.error("Database Exception", e)
-                    event.channel.sendMessage("Something went wrong with the database").queue()
-                } else {
-                    Logger.error("Command Exception: ${command}", e)
-                    event.channel.sendMessage("Something went wrong").queue()
-                }
+                Logger.error("Command Exception", e)
+                event.channel.sendMessage("Something went wrong").await()
                 addEmergencyNotification(
                     EmergencyNotification(
-                        "Command Exception: ${command}",
+                        "Command Exception",
                         10,
                         e.stackTraceToString()
                     )
@@ -81,23 +95,39 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
 
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         val command = event.name
-        if (commands.containsKey(command)) {
+        commandListenerCoroutineScope.launch {
             try {
-                event.deferReply().queue()
-                commands[command]!!.handler(event)
-            } catch (e: CommandExitException) {
-                event.hook.sendMessage(e.message!!).queue()
-            } catch (e: Exception) {
-                if (e is DatabaseException) {
-                    Logger.error("Database Exception", e)
-                    event.hook.sendMessage("Something went wrong with the database").queue()
-                } else {
-                    Logger.error("Command Exception: ${command}", e)
-                    event.hook.sendMessage("Something went wrong").queue()
+                if (commands.containsKey(command)) {
+                    try {
+                        event.deferReply().await()
+                        commandListenerCoroutineScope.launch {
+                            commands[command]!!.handler(event)
+                        }
+                    } catch (e: CommandExitException) {
+                        event.hook.sendMessage(e.message!!).await()
+                    } catch (e: Exception) {
+                        if (e is DatabaseException) {
+                            Logger.error("Database Exception", e)
+                            event.hook.sendMessage("Something went wrong with the database").await()
+                        } else {
+                            Logger.error("Command Exception: ${command}", e)
+                            event.hook.sendMessage("Something went wrong").await()
+                        }
+                        addEmergencyNotification(
+                            EmergencyNotification(
+                                "Command Exception: $command",
+                                10,
+                                e.stackTraceToString()
+                            )
+                        )
+                    }
                 }
+            } catch (e: Exception) {
+                Logger.error("Command Exception", e)
+                event.hook.sendMessage("Something went wrong").await()
                 addEmergencyNotification(
                     EmergencyNotification(
-                        "Command Exception: ${command}",
+                        "Command Exception",
                         10,
                         e.stackTraceToString()
                     )

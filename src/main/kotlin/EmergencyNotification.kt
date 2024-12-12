@@ -30,7 +30,7 @@ fun addEmergencyNotification(emergencyNotification: EmergencyNotification) {
     startNotificationThread()
     emergencyNotificationPriorityQueue.add(emergencyNotification)
     while (!::notificationObject.isInitialized) {
-
+        // Hey kotlin, can we get a waitTillInitialized() extension function? :D
     }
     synchronized(notificationObject) {
         notificationObject.notify()
@@ -55,7 +55,7 @@ private val notificationThread = Thread {
                 admins.forEach { admin ->
                     jda.retrieveUserById(admin).queue { user ->
                         user.openPrivateChannel().queue { channel ->
-                            channel.sendMessage(notification.message).queue()
+                            channel.sendMessage(notification.message).queue() // We're actually fine with not using await here since there's basically nothing we can do if it fails anyway, and we don't want to block the thread
                             if (notification.longMessage != null) {
                                 kotlin.io.path.createTempFile("longMessage", ".txt").toFile().apply {
                                     writeText(notification.longMessage)

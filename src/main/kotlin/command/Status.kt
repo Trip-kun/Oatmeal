@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -22,12 +23,12 @@ class Status(private val jda: JDA) : Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
-        event.channel.sendMessage(getStatus()).queue()
+    override suspend fun handler(event: MessageReceivedEvent) {
+        event.channel.sendMessage(getStatus()).await()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
-        event.hook.sendMessage(getStatus()).queue()
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
+        event.hook.sendMessage(getStatus()).await()
     }
 
     private fun getStatus(): String {

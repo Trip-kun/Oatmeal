@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Member
@@ -10,6 +11,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
+import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.exception.CommandExitException
 import tech.trip_kun.sinon.exception.CommandInitializationException
 import tech.trip_kun.sinon.getConfig
@@ -39,7 +41,12 @@ abstract class Command {
         arguments.forEach {
             addOption(slashCommandData, it)
         }
-        jda.upsertCommand(slashCommandData).queue()
+        try {
+            jda.upsertCommand(slashCommandData).complete() // We don't use await since this isn't a suspend fun. We don't want a suspend fun since this gets called from a constructor, and the performance benefit would be static anyway
+        } catch (e: Exception) {
+            Logger.error("Failed to register command " + firstArgument.getName(), e)
+            throw CommandInitializationException("Failed to register command " + firstArgument.getName())
+        }
         category = getCategory()
         initialized = true
     }
@@ -429,14 +436,13 @@ abstract class Command {
      * @see handler(event: SlashCommandInteractionEvent)
      * @param event The message received event to handle
      */
-    abstract fun handler(event: MessageReceivedEvent)
-
+    abstract suspend fun handler(event: MessageReceivedEvent)
     /**
      * Handle a slash command interaction event
      * @see handler(event: MessageReceivedEvent)
      * @param event The slash command interaction event to handle
      */
-    abstract fun handler(event: SlashCommandInteractionEvent)
+    abstract suspend fun handler(event: SlashCommandInteractionEvent)
 }
 
 enum class CommandCategory {
@@ -614,38 +620,53 @@ fun checkIsNotGuildOwner(event: SlashCommandInteractionEvent, userId: Long) {
     }
 }
 
-fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
+suspend fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
-    if (event.guild.retrieveMemberById(userId).complete()?.let { event.guild.selfMember.canInteract(it) } == true) {
-        return
+    try {
+        if (event.guild.retrieveMemberById(userId).await()?.let { event.guild.selfMember.canInteract(it) } == true) {
+            return
+        }
+    } catch (e: Exception) {
+        throw CommandExitException("Sorry, something went wrong when I tried to check the hierarchy to see if we can run this command")
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
 }
-
-fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
+suspend fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
-    if (event.guild?.retrieveMemberById(userId)?.complete()?.let { event.guild!!.selfMember.canInteract(it) } == true) {
-        return
+    try {
+        if (event.guild?.retrieveMemberById(userId)?.await()
+                ?.let { event.guild!!.selfMember.canInteract(it) } == true
+        ) {
+            return
+        }
+    } catch (e: Exception) {
+        throw CommandExitException("Sorry, something went wrong when I tried to check the hierarchy to see if we can run this command")
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
 }
-
-fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
+suspend fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
     val runningMember = event.member
-    val targetMember = event.guild?.retrieveMemberById(userId)?.complete()
-    if (targetMember?.let { runningMember?.canInteract(it) } == true) {
-        return
+    try {
+        val targetMember = event.guild?.retrieveMemberById(userId)?.await()
+        if (targetMember?.let { runningMember?.canInteract(it) } == true) {
+            return
+        }
+    } catch (e: Exception) {
+        throw CommandExitException("Sorry, something went wrong when I tried to check the hierarchy to see if we can run this command")
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than you")
 }
-
-fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
+suspend fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
     val runningMember = event.member
-    val targetMember: Member? = event.guild.retrieveMemberById(userId).complete()
-    if (targetMember?.let { runningMember?.canInteract(it) } == true) {
-        return
+    try {
+        val targetMember: Member? = event.guild.retrieveMemberById(userId).await()
+        if (targetMember?.let { runningMember?.canInteract(it) } == true) {
+            return
+        }
+    } catch (e: Exception) {
+        throw CommandExitException("Sorry, something went wrong when I tried to check the hierarchy to see if we can run this command")
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than you")
 }

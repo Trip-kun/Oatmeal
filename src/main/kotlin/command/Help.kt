@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -21,33 +22,7 @@ class Help(private val jda: JDA) : Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
-        val arguments = parseArguments(event)
-        var embedBuilder: EmbedBuilder? = null
-        if (arguments.isEmpty()) {
-            embedBuilder = commonWork(null, null)
-        }
-        if (arguments.size == 1) {
-            val command = arguments[0].getStringValue()
-            if (command == null) {
-                val page = arguments[0].getIntValue()
-                embedBuilder = commonWork(null, page)
-            } else {
-                embedBuilder = commonWork(command, null)
-            }
-        }
-        if (arguments.size == 2) {
-            val command = arguments[1].getStringValue()
-            val page = arguments[0].getIntValue()
-            embedBuilder = commonWork(command, page)
-        }
-        if (embedBuilder == null) {
-            throw CommandExitException("Invalid arguments")
-        }
-        event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
-    }
-
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
         var embedBuilder: EmbedBuilder? = null
         if (arguments.isEmpty()) {
@@ -71,10 +46,36 @@ class Help(private val jda: JDA) : Command() {
             throw CommandExitException("Invalid arguments")
         }
 
-        event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
+        event.channel.sendMessageEmbeds(embedBuilder.build()).await()
     }
 
-    private fun commonWork(command: String?, page: Int?): EmbedBuilder {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
+        val arguments = parseArguments(event)
+        var embedBuilder: EmbedBuilder? = null
+        if (arguments.isEmpty()) {
+            embedBuilder = commonWork(null, null)
+        }
+        if (arguments.size == 1) {
+            val command = arguments[0].getStringValue()
+            if (command == null) {
+                val page = arguments[0].getIntValue()
+                embedBuilder = commonWork(null, page)
+            } else {
+                embedBuilder = commonWork(command, null)
+            }
+        }
+        if (arguments.size == 2) {
+            val command = arguments[1].getStringValue()
+            val page = arguments[0].getIntValue()
+            embedBuilder = commonWork(command, page)
+        }
+        if (embedBuilder == null) {
+            throw CommandExitException("Invalid arguments")
+        }
+
+        event.hook.sendMessageEmbeds(embedBuilder.build()).await()
+    }
+    private suspend fun commonWork(command: String?, page: Int?): EmbedBuilder {
         if (command != null && page != null && command.isNotBlank()) {
             // Exit, as we can't show help for specific command and page at the same time
             throw CommandExitException("Can't show help for specific command and page at the same time")

@@ -1,8 +1,10 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import tech.trip_kun.sinon.exception.CommandExitException
 
 class Ping(private val jda: JDA) : Command() {
     private val name: String = "ping"
@@ -17,12 +19,16 @@ class Ping(private val jda: JDA) : Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
-        event.channel.sendMessage("Pong!").queue()
+    override suspend fun handler(event: MessageReceivedEvent) {
+        val message = try { event.channel.sendMessage("Pong!").await() } catch (e: Exception) { throw CommandExitException("Failed to send message") }
+        val time = message.timeCreated.toInstant().toEpochMilli() - event.message.timeCreated.toInstant().toEpochMilli()
+        message.editMessage("Pong! (${time}ms)").await()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
-        event.hook.sendMessage("Pong!").queue()
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
+        val message = try { event.channel.sendMessage("Pong!").await() } catch (e: Exception) { throw CommandExitException("Failed to send message") }
+        val time = message.timeCreated.toInstant().toEpochMilli() - event.interaction.timeCreated.toInstant().toEpochMilli()
+        message.editMessage("Pong! (${time}ms)").await()
     }
 
 }

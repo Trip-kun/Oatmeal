@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Member
@@ -40,7 +41,7 @@ class Timeout(private val jda: JDA) : Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         requireGuild(event)
         requireBotPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
         requireUserPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
@@ -50,7 +51,7 @@ class Timeout(private val jda: JDA) : Command() {
         }
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
         val member =
-            event.guild.retrieveMemberById(userId).complete() ?: throw CommandExitException("Invalid arguments")
+            event.guild.retrieveMemberById(userId).await() ?: throw CommandExitException("Invalid arguments")
         val time = arguments[1].getIntValue() ?: throw CommandExitException("Invalid arguments")
         val unit = arguments[2].getStringValue() ?: throw CommandExitException("Invalid arguments")
         var reason = "No reason provided"
@@ -61,10 +62,10 @@ class Timeout(private val jda: JDA) : Command() {
         checkUserHierarchy(event, member.idLong)
         checkHierarchy(event, member.idLong)
         val embedBuilder = commonWork(author, member, time, unit, reason)
-        event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
+        event.channel.sendMessageEmbeds(embedBuilder.build()).await()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         requireGuild(event)
         requireBotPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
         requireUserPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
@@ -74,7 +75,7 @@ class Timeout(private val jda: JDA) : Command() {
         }
         val userId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
         val member =
-            event.guild?.retrieveMemberById(userId)?.complete() ?: throw CommandExitException("Invalid arguments")
+            event.guild?.retrieveMemberById(userId)?.await() ?: throw CommandExitException("Invalid arguments")
         val time = arguments[1].getIntValue() ?: throw CommandExitException("Invalid arguments")
         val unit = arguments[2].getStringValue() ?: throw CommandExitException("Invalid arguments")
         var reason = "No reason provided"
@@ -85,10 +86,10 @@ class Timeout(private val jda: JDA) : Command() {
         checkUserHierarchy(event, member.idLong)
         checkHierarchy(event, member.idLong)
         val embedBuilder = commonWork(author, member, time, unit, reason)
-        event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
+        event.hook.sendMessageEmbeds(embedBuilder.build()).await()
     }
 
-    private fun commonWork(author: Member, member: Member, time: Int, unit: String, reason: String): EmbedBuilder {
+    private suspend fun commonWork(author: Member, member: Member, time: Int, unit: String, reason: String): EmbedBuilder {
         if (member.idLong == author.idLong) {
             throw CommandExitException("You cannot timeout yourself")
         }
@@ -113,10 +114,10 @@ class Timeout(private val jda: JDA) : Command() {
         }
         try {
             when (unit) {
-                "seconds" -> member.timeoutFor(time.toLong(), TimeUnit.SECONDS).queue()
-                "minutes" -> member.timeoutFor(time.toLong(), TimeUnit.MINUTES).queue()
-                "hours" -> member.timeoutFor(time.toLong(), TimeUnit.HOURS).queue()
-                "days" -> member.timeoutFor(time.toLong(), TimeUnit.DAYS).queue()
+                "seconds" -> member.timeoutFor(time.toLong(), TimeUnit.SECONDS).await()
+                "minutes" -> member.timeoutFor(time.toLong(), TimeUnit.MINUTES).await()
+                "hours" -> member.timeoutFor(time.toLong(), TimeUnit.HOURS).await()
+                "days" -> member.timeoutFor(time.toLong(), TimeUnit.DAYS).await()
                 else -> throw CommandExitException("Invalid unit")
             }
         } catch (e: IllegalArgumentException) {
