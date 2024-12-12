@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.command
 
+import dev.minn.jda.ktx.coroutines.await
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Member
@@ -382,13 +383,13 @@ abstract class Command {
      * @see handler(event: SlashCommandInteractionEvent)
      * @param event The message received event to handle
      */
-    abstract fun handler(event: MessageReceivedEvent)
+    abstract suspend fun handler(event: MessageReceivedEvent)
     /**
      * Handle a slash command interaction event
      * @see handler(event: MessageReceivedEvent)
      * @param event The slash command interaction event to handle
      */
-    abstract fun handler(event: SlashCommandInteractionEvent)
+    abstract suspend fun handler(event: SlashCommandInteractionEvent)
 }
 enum class CommandCategory {
     ESSENTIAL,
@@ -498,33 +499,33 @@ fun checkIsNotGuildOwner(event: SlashCommandInteractionEvent, userId: Long) {
     }
 }
 
-fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
+suspend fun checkHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
-    if (event.guild.retrieveMemberById(userId).complete()?.let { event.guild.selfMember.canInteract(it) } == true) {
+    if (event.guild.retrieveMemberById(userId).await()?.let { event.guild.selfMember.canInteract(it) } == true) {
         return
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
 }
-fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
+suspend fun checkHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
-    if (event.guild?.retrieveMemberById(userId)?.complete()?.let { event.guild!!.selfMember.canInteract(it) } == true) {
+    if (event.guild?.retrieveMemberById(userId)?.await()?.let { event.guild!!.selfMember.canInteract(it) } == true) {
         return
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than me")
 }
-fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
+suspend fun checkUserHierarchy(event: SlashCommandInteractionEvent, userId: Long) {
     requireGuild(event)
     val runningMember = event.member
-    val targetMember = event.guild?.retrieveMemberById(userId)?.complete()
+    val targetMember = event.guild?.retrieveMemberById(userId)?.await()
     if (targetMember?.let { runningMember?.canInteract(it) } == true) {
         return
     }
     throw CommandExitException("You cannot run this command on a user with a higher role than you")
 }
-fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
+suspend fun checkUserHierarchy(event: MessageReceivedEvent, userId: Long) {
     requireGuild(event)
     val runningMember = event.member
-    val targetMember: Member? = event.guild.retrieveMemberById(userId).complete()
+    val targetMember: Member? = event.guild.retrieveMemberById(userId).await()
     if (targetMember?.let { runningMember?.canInteract(it) } == true) {
         return
     }

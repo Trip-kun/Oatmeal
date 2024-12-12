@@ -33,7 +33,7 @@ class SetStarboardChannel(private val jda: JDA) : Command() {
         return CommandCategory.UTILITY
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         requireGuild(event)
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
@@ -45,7 +45,7 @@ class SetStarboardChannel(private val jda: JDA) : Command() {
         }
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         requireGuild(event)
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
@@ -57,7 +57,7 @@ class SetStarboardChannel(private val jda: JDA) : Command() {
         }
     }
 
-    private fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild?, channel: TextChannel?): EmbedBuilder {
+    private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild?, channel: TextChannel?): EmbedBuilder {
         var guildDao: Dao<Guild, Long>? = null
         runSQLUntilMaxTries {
             guildDao = getGuildDao()

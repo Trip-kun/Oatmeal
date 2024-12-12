@@ -2,6 +2,9 @@ package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.dao.GenericRawResults
+import dev.minn.jda.ktx.coroutines.await
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
@@ -12,9 +15,11 @@ import tech.trip_kun.sinon.data.entity.BanEntry
 import tech.trip_kun.sinon.data.getBanEntryDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 import tech.trip_kun.sinon.exception.CommandExitException
+import tech.trip_kun.sinon.getDispatcher
 import java.time.format.DateTimeParseException
 import java.util.*
 import java.util.concurrent.TimeUnit
+private val banCoroutineScope = CoroutineScope(getDispatcher())
 class Ban(private var jda: JDA): Command() {
     private var timerTask: TimerTask
     private val timer = Timer()
@@ -29,12 +34,14 @@ class Ban(private var jda: JDA): Command() {
         initialize(jda)
         timerTask = object : TimerTask() {
             override fun run() {
-                handleBans()
+                banCoroutineScope.launch {
+                    handleBans()
+                }
             }
         }
         timer.schedule(timerTask, 0, 60*1000)
     }
-    private fun handleBans() {
+    private suspend fun handleBans() {
         var banEntryDao: Dao<BanEntry, Int>? = null
         runSQLUntilMaxTries { banEntryDao = getBanEntryDao() }
         var bans: GenericRawResults<BanEntry>? = null
@@ -46,7 +53,7 @@ class Ban(private var jda: JDA): Command() {
             val banEntry = it
             val guild = jda.getGuildById(it.guildId)
             if (guild != null) {
-                val user = jda.retrieveUserById(banEntry.userId).complete()
+                val user = jda.retrieveUserById(banEntry.userId).await()
                 if (user != null) {
                     guild.unban(user).queue()
                 }
@@ -58,13 +65,13 @@ class Ban(private var jda: JDA): Command() {
         return CommandCategory.MODERATION
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         requireGuild(event)
         requireBotPermission(event, Permission.BAN_MEMBERS)
         requireUserPermission(event, Permission.BAN_MEMBERS)
         val arguments = parseArguments(event)
         val userToBeBannedId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val userToBeBanned = jda.retrieveUserById(userToBeBannedId).complete() ?: throw CommandExitException("User not found")
+        val userToBeBanned = jda.retrieveUserById(userToBeBannedId).await() ?: throw CommandExitException("User not found")
         checkHierarchy(event, userToBeBanned.idLong)
         checkUserHierarchy(event, userToBeBanned.idLong)
         if (userToBeBannedId == event.author.idLong) {
@@ -74,8 +81,8 @@ class Ban(private var jda: JDA): Command() {
             throw CommandExitException("You cannot ban me using this command")
         }
         var clearTime = 0
-        var expiry: String = ""
-        var reason: String = ""
+        var expiry = ""
+        var reason = ""
         if (arguments.size>1) {
             clearTime = arguments[1].getIntValue() ?: 0
         }
@@ -91,13 +98,13 @@ class Ban(private var jda: JDA): Command() {
 
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         requireGuild(event)
         requireBotPermission(event, Permission.BAN_MEMBERS)
         requireUserPermission(event, Permission.BAN_MEMBERS)
         val arguments = parseArguments(event)
         val userToBeBannedId = arguments[0].getLongValue() ?: throw CommandExitException("Invalid arguments")
-        val userToBeBanned = jda.retrieveUserById(userToBeBannedId).complete() ?: throw CommandExitException("User not found")
+        val userToBeBanned = jda.retrieveUserById(userToBeBannedId).await() ?: throw CommandExitException("User not found")
         checkHierarchy(event, userToBeBanned.idLong)
         checkUserHierarchy(event, userToBeBanned.idLong)
         if (userToBeBannedId == event.user.idLong) {
@@ -107,8 +114,8 @@ class Ban(private var jda: JDA): Command() {
             throw CommandExitException("You cannot ban me using this command")
         }
         var clearTime = 0
-        var expiry: String = ""
-        var reason: String = ""
+        var expiry = ""
+        var reason = ""
         if (arguments.size>1) {
             clearTime = arguments[1].getIntValue() ?: 0
         }
@@ -122,7 +129,7 @@ class Ban(private var jda: JDA): Command() {
         event.hook.sendMessage("User has been banned").queue()
 
     }
-    private fun commonWork(userToBeBanned: User, userBanning: User, guild: Guild, reason: String?, clearTime: Int, expiry: String) {
+    private suspend fun commonWork(userToBeBanned: User, userBanning: User, guild: Guild, reason: String?, clearTime: Int, expiry: String) {
         if (clearTime>168) {
             throw CommandExitException("Clear time cannot be more than 168 hours (7 days)")
         }

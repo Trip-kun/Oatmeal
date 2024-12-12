@@ -22,7 +22,7 @@ class SetCurrencyPreference(private val jda: JDA) : Command() {
         return CommandCategory.SETTINGS
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
         val enabled = arguments[0].getBooleanValue() ?: throw CommandExitException("Invalid arguments")
         try {
@@ -41,7 +41,7 @@ class SetCurrencyPreference(private val jda: JDA) : Command() {
         event.channel.sendMessage("Currency notifications for you have been ${if (enabled) "enabled" else "disabled"}").queue()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         val arguments = parseArguments(event)
         val enabled = arguments[0].getBooleanValue() ?: throw CommandExitException("Invalid arguments")
         try {

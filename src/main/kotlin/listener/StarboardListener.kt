@@ -1,19 +1,21 @@
 package tech.trip_kun.sinon.listener
 
+import kotlinx.coroutines.CoroutineScope
+import tech.trip_kun.sinon.getDispatcher
+
 import com.j256.ormlite.dao.Dao
+import dev.minn.jda.ktx.coroutines.await
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.emoji.Emoji
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.events.message.react.*
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.requests.GatewayIntent.*
-import org.apache.commons.logging.Log
 import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.annotations.ListenerClass
 import tech.trip_kun.sinon.annotations.ListenerConstructor
@@ -23,6 +25,8 @@ import tech.trip_kun.sinon.data.entity.StarboardEntry
 import tech.trip_kun.sinon.data.getGuildDao
 import tech.trip_kun.sinon.data.getStarboardEntryDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
+
+private val starboardListenerCoroutineScope = CoroutineScope(getDispatcher())
 @ListenerClass
 @ListenerIntents(GatewayIntent.GUILD_MESSAGE_REACTIONS)
 @ListenerIntents(MESSAGE_CONTENT)
@@ -33,22 +37,28 @@ class StarboardListener @ListenerConstructor constructor(private val jda: JDA): 
     override fun onMessageReactionRemoveEmoji(event: MessageReactionRemoveEmojiEvent) {
         if (!event.isFromGuild) return
         val guildChannel  = event.guildChannel
-        val message = guildChannel.retrieveMessageById(event.messageId).complete()
-        commonWork(event.guild, message)
+        starboardListenerCoroutineScope.launch {
+            val message = guildChannel.retrieveMessageById(event.messageId).await()
+            commonWork(event.guild, message)
+        }
     }
 
     override fun onMessageReactionRemoveAll(event: MessageReactionRemoveAllEvent) {
         if (!event.isFromGuild) return
         val guildChannel  = event.guildChannel
-        val message = guildChannel.retrieveMessageById(event.messageId).complete()
-        commonWork(event.guild, message)
+        starboardListenerCoroutineScope.launch {
+            val message = guildChannel.retrieveMessageById(event.messageId).await()
+            commonWork(event.guild, message)
+        }
     }
 
     override fun onGenericMessageReaction(event: GenericMessageReactionEvent) {
         if (!event.isFromGuild) return
         val guildChannel  = event.guildChannel
-        val message = guildChannel.retrieveMessageById(event.messageId).complete()
-        commonWork(event.guild, message)
+        starboardListenerCoroutineScope.launch {
+            val message = guildChannel.retrieveMessageById(event.messageId).await()
+            commonWork(event.guild, message)
+        }
     }
 
 
@@ -57,13 +67,13 @@ class StarboardListener @ListenerConstructor constructor(private val jda: JDA): 
 
 private fun generateStarboardEmbeds(member: Member, count: Int, message: String): EmbedBuilder {
     val embed = EmbedBuilder()
-    embed.setAuthor(member.user.asTag, null, member.user.effectiveAvatarUrl)
+    embed.setAuthor(member.user.asMention, null, member.user.effectiveAvatarUrl)
     embed.setDescription(message)
     embed.setFooter("⭐ $count")
     return embed
 }
 
-private fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, message: Message) {
+private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, message: Message) {
     var guildDao: Dao<Guild, Long>? = null
     var starboardEntryDao: Dao<StarboardEntry, Long>? = null
     runSQLUntilMaxTries {
@@ -97,15 +107,14 @@ private fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, message: Me
         }
     if (count >= guild!!.starboardLimit) {
         if (starboardEntry!!.starboardMessageId == 0L) {
-            var starboardMessage: Message? = null
-            starboardMessage = try {
-                channel.retrieveMessageById(starboardEntry!!.starboardMessageId).complete()
+            var starboardMessage = try {
+                channel.retrieveMessageById(starboardEntry!!.starboardMessageId).await()
             } catch (e: ErrorResponseException) {
                 null
             }
             if (starboardMessage == null) {
                 val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
-                starboardMessage = channel.sendMessageEmbeds(embed.build()).complete()
+                starboardMessage = channel.sendMessageEmbeds(embed.build()).await()
                 starboardEntry!!.starboardMessageId = starboardMessage.idLong
             } else {
                 val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)

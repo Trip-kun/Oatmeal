@@ -1,5 +1,7 @@
 package tech.trip_kun.sinon.listeners
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -14,7 +16,7 @@ import tech.trip_kun.sinon.command.Command
 import tech.trip_kun.sinon.exception.CommandExitException
 
 private lateinit var commandListener: CommandListener
-
+private val commandListenerCoroutineScope = CoroutineScope(getDispatcher())
 @ListenerClass
 @ListenerIntents(GatewayIntent.MESSAGE_CONTENT)
 class CommandListener @ListenerConstructor constructor(private val jda: JDA) : ListenerAdapter() {
@@ -44,7 +46,9 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
             val command = message.substring(getConfig().discordSettings.prefix.length).split(" ")[0]
             try {
                 if (commands.containsKey(command)) {
-                    commands[command]!!.handler(event)
+                    commandListenerCoroutineScope.launch {
+                        commands[command]!!.handler(event)
+                    }
                 }
             } catch (e: CommandExitException) {
                 event.channel.sendMessage(e.message!!).queue()
@@ -65,7 +69,9 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
         if (commands.containsKey(command)) {
             try {
                 event.deferReply().queue()
-                commands[command]!!.handler(event)
+                commandListenerCoroutineScope.launch {
+                    commands[command]!!.handler(event)
+                }
             } catch (e: CommandExitException) {
                 event.hook.sendMessage(e.message!!).queue()
             } catch (e: Exception) {

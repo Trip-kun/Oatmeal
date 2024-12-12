@@ -22,7 +22,7 @@ class SetTimezone(private val jda: JDA) : Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
         var timezone: String? = null
         if (arguments.isNotEmpty()) {
@@ -38,7 +38,7 @@ class SetTimezone(private val jda: JDA) : Command() {
         }
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         val arguments = parseArguments(event)
         var timezone: String? = null
         if (arguments.isNotEmpty()) {

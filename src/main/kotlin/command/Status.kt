@@ -21,11 +21,11 @@ class Status(private val jda: JDA): Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         event.channel.sendMessage(getStatus()).queue()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         event.hook.sendMessage(getStatus()).queue()
     }
     private fun getStatus(): String {

@@ -2,6 +2,9 @@ package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.dao.GenericRawResults
+import dev.minn.jda.ktx.coroutines.await
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -11,13 +14,14 @@ import tech.trip_kun.sinon.data.getReminderDao
 import tech.trip_kun.sinon.data.getUserDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 import tech.trip_kun.sinon.exception.CommandExitException
+import tech.trip_kun.sinon.getDispatcher
 import java.text.DateFormat
 import java.time.Instant
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
-
+private val remindCoroutineScope = CoroutineScope(getDispatcher())
 class Remind(private val jda: JDA): Command() {
     private var timerTask: TimerTask
     private val timer = Timer()
@@ -29,12 +33,14 @@ class Remind(private val jda: JDA): Command() {
         initialize(jda)
         timerTask = object : TimerTask() {
             override fun run() {
-                handleReminders()
+                remindCoroutineScope.launch {
+                    handleReminders()
+                }
             }
         }
         timer.schedule(timerTask, 0, 30*1000)
     }
-    private fun handleReminders() {
+    private suspend fun handleReminders() {
         var reminderDao: Dao<Reminder, Long>? = null
         runSQLUntilMaxTries { reminderDao= getReminderDao() }
         val now = System.currentTimeMillis()
@@ -45,7 +51,7 @@ class Remind(private val jda: JDA): Command() {
         }
         reminders?.forEach {
             val user = it.user
-            val channel = jda.retrieveUserById(user.id).complete()?.openPrivateChannel()?.complete()
+            val channel = jda.retrieveUserById(user.id).await()?.openPrivateChannel()?.await()
             if (it.reminder.length>2000) {
                 // Split the message into multiple messages
                 val message = "I am here to remind you of: ${it.reminder}"
@@ -70,7 +76,7 @@ class Remind(private val jda: JDA): Command() {
         return CommandCategory.UTILITY
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
         if (arguments.size < 2) {
             throw CommandExitException("Invalid arguments")
@@ -104,7 +110,7 @@ class Remind(private val jda: JDA): Command() {
         }
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         val arguments = parseArguments(event)
         if (arguments.size < 2) {
             throw CommandExitException("Invalid arguments")
@@ -142,7 +148,7 @@ class Remind(private val jda: JDA): Command() {
     private class HeldUser {
         var user: User? = null
     }
-    private fun commonWork(duration: String, time: String?, reminder: String, user: User):String {
+    private suspend fun commonWork(duration: String, time: String?, reminder: String, user: User):String {
         try {
             var unixTime: Long
             try {

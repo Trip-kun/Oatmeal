@@ -5,7 +5,6 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import tech.trip_kun.sinon.exception.CommandExitException
-import tech.trip_kun.sinon.listeners.CommandListener
 import tech.trip_kun.sinon.listeners.getCommandListener
 
 class Help(private val jda: JDA): Command() {
@@ -21,7 +20,7 @@ class Help(private val jda: JDA): Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         val arguments = parseArguments(event)
         var embedBuilder: EmbedBuilder? = null
         if (arguments.isEmpty()) {
@@ -47,7 +46,7 @@ class Help(private val jda: JDA): Command() {
         event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         val arguments = parseArguments(event)
         var embedBuilder: EmbedBuilder? = null
         if (arguments.isEmpty()) {
@@ -73,7 +72,7 @@ class Help(private val jda: JDA): Command() {
 
         event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
     }
-    private fun commonWork(command: String?, page: Int?): EmbedBuilder {
+    private suspend fun commonWork(command: String?, page: Int?): EmbedBuilder {
         if (command != null && page != null && command.isNotBlank()) {
             // Exit, as we can't show help for specific command and page at the same time
             throw CommandExitException("Can't show help for specific command and page at the same time")

@@ -23,7 +23,7 @@ class SetStarboardLimit(private val jda: JDA): Command() {
         return CommandCategory.UTILITY
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         requireGuild(event)
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
@@ -31,14 +31,14 @@ class SetStarboardLimit(private val jda: JDA): Command() {
         event.channel.sendMessageEmbeds(commonWork(event.guild, limit).build()).queue()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         requireGuild(event)
         requireUserPermission(event, Permission.MANAGE_SERVER)
         val arguments = parseArguments(event)
         val limit = arguments[0].getIntValue() ?: throw CommandExitException("Invalid arguments") // Exception should not be called but just in case
         event.hook.sendMessageEmbeds(commonWork(event.guild, limit).build()).queue()
     }
-    private fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild?, limit: Int): EmbedBuilder {
+    private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild?, limit: Int): EmbedBuilder {
         var guildDao: Dao<Guild, Long>? = null
         runSQLUntilMaxTries {
             guildDao = getGuildDao()
