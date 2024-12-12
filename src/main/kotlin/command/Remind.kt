@@ -23,8 +23,6 @@ import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
 private val remindCoroutineScope = CoroutineScope(getDispatcher())
 class Remind(private val jda: JDA): Command() {
-    private var timerTask: TimerTask
-    private val timer = Timer()
 
     init {
         addArgument(Argument("remind", "Sets a reminder for the future", true, ArgumentType.COMMAND, null))
@@ -40,14 +38,12 @@ class Remind(private val jda: JDA): Command() {
         )
         addArgument(Argument("time", "The time to remind you at (remind me in X at Y)", false, ArgumentType.TEXT, null))
         initialize(jda)
-        timerTask = object : TimerTask() {
-            override fun run() {
-                remindCoroutineScope.launch {
-                    handleReminders()
-                }
+        remindCoroutineScope.launch {
+            while (true) {
+                handleReminders()
+                kotlinx.coroutines.delay(30000)
             }
         }
-        timer.schedule(timerTask, 0, 30 * 1000)
     }
     private suspend fun handleReminders() {
         var reminderDao: Dao<Reminder, Long>? = null
