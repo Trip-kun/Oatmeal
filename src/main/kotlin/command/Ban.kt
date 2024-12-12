@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.data.entity.BanEntry
 import tech.trip_kun.sinon.data.getBanEntryDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
@@ -67,6 +68,7 @@ class Ban(private var jda: JDA): Command() {
                     try {
                         guild.unban(user).await()
                     } catch (e: Exception) {
+                        Logger.error("Failed to unban user ${user.idLong} from guild ${guild.idLong}")
                         return@forEach
                         // Do nothing, but skip the rest of the code so we don't delete the ban entry
                     }

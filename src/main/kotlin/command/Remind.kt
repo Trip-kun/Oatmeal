@@ -8,6 +8,8 @@ import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import org.apache.commons.logging.Log
+import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
 import tech.trip_kun.sinon.data.getReminderDao
@@ -67,6 +69,7 @@ class Remind(private val jda: JDA): Command() {
                     try {
                         channel?.sendMessage(message.substring(start, end))?.await()
                     } catch (e: Exception) {
+                        Logger.error("Failed to send reminder message: ${e.message}")
                         return@forEach // If we can't send the message, we don't want to delete the reminder
                     }
                     start = end
@@ -79,6 +82,7 @@ class Remind(private val jda: JDA): Command() {
                 try {
                     channel?.sendMessage("I am here to remind you of: ${it.reminder}")?.await()
                 } catch (e: Exception) {
+                    Logger.error("Failed to send reminder message: ${e.message}")
                     return@forEach // If we can't send the message, we don't want to delete the reminder
                 }
             }
