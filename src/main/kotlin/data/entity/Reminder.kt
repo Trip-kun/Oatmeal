@@ -12,6 +12,7 @@ class Reminder(@DatabaseField(foreign = true, canBeNull = false) var user: User)
 
     @DatabaseField(canBeNull = false)
     var reminder: String = ""
+
     @DatabaseField(canBeNull = false)
     var timeUnix: Long = 0
 }

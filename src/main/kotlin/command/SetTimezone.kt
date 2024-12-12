@@ -9,15 +9,16 @@ import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 import java.time.DateTimeException
 import java.time.ZoneId
 import java.time.zone.ZoneRulesException
-import java.util.*
 
 class SetTimezone(private val jda: JDA) : Command() {
     init {
         val name = "settimezone"
-        val description = "Sets your timezone to a specified timezone. just use no arguments to see your current timezone"
-        addArgument(Argument(name,description, true, ArgumentType.COMMAND, null))
+        val description =
+            "Sets your timezone to a specified timezone. just use no arguments to see your current timezone"
+        addArgument(Argument(name, description, true, ArgumentType.COMMAND, null))
         addArgument(Argument("timezone", "The timezone you want to set", false, ArgumentType.WORD, null))
     }
+
     override fun getCategory(): CommandCategory {
         return CommandCategory.ESSENTIAL
     }
@@ -53,6 +54,7 @@ class SetTimezone(private val jda: JDA) : Command() {
             event.hook.sendMessageEmbeds(embedBuilder.build()).queue()
         }
     }
+
     private fun commonWork(user: User, timezone: String?): Array<EmbedBuilder> {
         if (timezone == null) {
             val embedBuilders: ArrayList<EmbedBuilder> = arrayListOf()
@@ -61,21 +63,21 @@ class SetTimezone(private val jda: JDA) : Command() {
             embedBuilder.setDescription("You can set your timezone by using the command `/settimezone <timezone>`")
             val timezones = ZoneId.getAvailableZoneIds().toTypedArray()
             var outString = ""
-            var totalLength=0
+            var totalLength = 0
             for (i in timezones.indices) {
 
-                if ((outString+timezones[i]+",").length >1024) {
-                    if (totalLength>4000) {
+                if ((outString + timezones[i] + ",").length > 1024) {
+                    if (totalLength > 4000) {
                         embedBuilders.add(embedBuilder)
                         embedBuilder = EmbedBuilder()
                         embedBuilder.setTitle("Here are the available timezones: ")
                         embedBuilder.setDescription("You can set your timezone by using the command `/settimezone <timezone>`")
-                        totalLength=0
+                        totalLength = 0
                     }
                     embedBuilder.addField("Timezones: ", outString, false)
                     outString = ""
                 }
-                totalLength+=timezones[i].length
+                totalLength += timezones[i].length
                 outString += timezones[i] + ","
             }
             embedBuilders.add(embedBuilder)
@@ -85,8 +87,8 @@ class SetTimezone(private val jda: JDA) : Command() {
             try {
                 val zid = ZoneId.of(timezone)
                 var userObject: tech.trip_kun.sinon.data.entity.User? = null
-                runSQLUntilMaxTries { userObject=tech.trip_kun.sinon.data.getUserDao().queryForId(user.idLong) }
-                userObject?.timeZone=zid.id
+                runSQLUntilMaxTries { userObject = tech.trip_kun.sinon.data.getUserDao().queryForId(user.idLong) }
+                userObject?.timeZone = zid.id
                 if (userObject != null) {
                     runSQLUntilMaxTries { tech.trip_kun.sinon.data.getUserDao().createOrUpdate(userObject) }
                 }

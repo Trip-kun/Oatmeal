@@ -11,7 +11,7 @@ import tech.trip_kun.sinon.data.getBanEntryDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 import tech.trip_kun.sinon.exception.CommandExitException
 
-class Unban(private val jda: JDA): Command() {
+class Unban(private val jda: JDA) : Command() {
     init {
         val name = "unban"
         val description = "Unbans a user from the server"
@@ -19,6 +19,7 @@ class Unban(private val jda: JDA): Command() {
         addArgument(Argument("userid", "The id of the user to unban", true, ArgumentType.WORD, null))
         initialize(jda)
     }
+
     override fun getCategory(): CommandCategory {
         return CommandCategory.MODERATION
     }

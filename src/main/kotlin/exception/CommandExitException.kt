@@ -1,4 +1,5 @@
 package tech.trip_kun.sinon.exception
+
 /**
  * Exception thrown when the command should exit
  * This exception should be caught and the message should be displayed to the user

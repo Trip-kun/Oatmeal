@@ -21,24 +21,31 @@ fun getJDA(): JDA {
     jda = jdaBuilder.build().awaitReady()
     return jda
 }
+
 fun loadJDA() {
     getJDA()
     addListeners(jda)
 }
+
 private fun addListeners(jda: JDA) {
-    reflections.getSubTypesOf(EventListener::class.java).filter{it.isAnnotationPresent(ListenerClass::class.java)}.forEach { listener ->
-        listener.constructors.filter{it.isAnnotationPresent(ListenerConstructor::class.java)}.forEach { constructor ->
-            addListener(jda, listener, constructor)
+    reflections.getSubTypesOf(EventListener::class.java).filter { it.isAnnotationPresent(ListenerClass::class.java) }
+        .forEach { listener ->
+            listener.constructors.filter { it.isAnnotationPresent(ListenerConstructor::class.java) }
+                .forEach { constructor ->
+                    addListener(jda, listener, constructor)
+                }
         }
-    }
 }
+
 private fun addListenerIntents(jdaBuilder: JDABuilder) {
-    reflections.getSubTypesOf(EventListener::class.java).filter{it.isAnnotationPresent(ListenerClass::class.java)}.forEach { listener ->
-        listener.constructors.filter{it.isAnnotationPresent(ListenerConstructor::class.java)}.forEach { _ ->
-            addListenerIntent(jdaBuilder, listener)
+    reflections.getSubTypesOf(EventListener::class.java).filter { it.isAnnotationPresent(ListenerClass::class.java) }
+        .forEach { listener ->
+            listener.constructors.filter { it.isAnnotationPresent(ListenerConstructor::class.java) }.forEach { _ ->
+                addListenerIntent(jdaBuilder, listener)
+            }
         }
-    }
 }
+
 private fun addListener(jda: JDA, listener: Class<out EventListener>, constructor: Constructor<*>) {
     try {
         jda.addEventListener(constructor.newInstance(jda))
@@ -46,6 +53,7 @@ private fun addListener(jda: JDA, listener: Class<out EventListener>, constructo
         Logger.error("Failed to load listener: ${listener.simpleName}", e)
     }
 }
+
 private fun addListenerIntent(jdaBuilder: JDABuilder, listener: Class<out EventListener>) {
     listener.annotations.filterIsInstance<ListenerIntents>().forEach {
         jdaBuilder.enableIntents(it.gatewayIntent)

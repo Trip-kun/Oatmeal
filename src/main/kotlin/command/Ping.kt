@@ -5,12 +5,12 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 
-class Ping(private val jda: JDA): Command() {
+class Ping(private val jda: JDA) : Command() {
     private val name: String = "ping"
     private val description: String = "Pong!"
 
     init {
-        addArgument(Argument(name,description,true, ArgumentType.COMMAND, null))
+        addArgument(Argument(name, description, true, ArgumentType.COMMAND, null))
         initialize(jda)
     }
 

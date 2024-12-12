@@ -21,6 +21,7 @@ private var guildDao: Dao<Guild, Long>? = null
 private var starboardEntryDao: Dao<StarboardEntry, Long>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
 private val DATABASE_VERSION = 2
+
 //Complete
 //Need to make a try-3-times method to use for all database calls
 // If all 3 calls fail we throw a marked runtime exception and notify the admins
@@ -31,6 +32,7 @@ private val DATABASE_VERSION = 2
 private var databaseEnabled = false
 val config = getConfig()
 val globalDispatcher = newSingleThreadContext("GlobalDispatcher")
+
 class DatabaseException(message: String) : RuntimeException(message) {
     private var hasBeenNotified = false
     fun hasBeenNotified(): Boolean {
@@ -187,6 +189,7 @@ fun getUserDao(): Dao<User, Long> {
     }
     return userDao!!
 }
+
 fun getReminderDao(): Dao<Reminder, Long> {
     if (!databaseEnabled && !databaseDoNotTryAgain) {
         runSQLUntilMaxTries { loadDatabase() }
@@ -196,6 +199,7 @@ fun getReminderDao(): Dao<Reminder, Long> {
     }
     return reminderDao!!
 }
+
 fun getBanEntryDao(): Dao<BanEntry, Int> {
     if (!databaseEnabled && !databaseDoNotTryAgain) {
         runSQLUntilMaxTries { loadDatabase() }
@@ -205,7 +209,6 @@ fun getBanEntryDao(): Dao<BanEntry, Int> {
     }
     return banEntryDao!!
 }
-
 fun getGuildDao(): Dao<Guild, Long> {
     if (!databaseEnabled && !databaseDoNotTryAgain) {
         runSQLUntilMaxTries { loadDatabase() }
@@ -225,7 +228,6 @@ fun getStarboardEntryDao(): Dao<StarboardEntry, Long> {
     }
     return starboardEntryDao!!
 }
-
 private fun upgrade(startVersion: Int, endVersion: Int) {
     if (startVersion < endVersion) {
         when (startVersion) {
@@ -264,7 +266,7 @@ private suspend fun reloadDatabase() {
                     null
                 )
             )
-            dbTries =0
+            dbTries = 0
             databaseDoNotTryAgain = false
             databaseEnabled = true
         } catch (e: DatabaseException) {
@@ -304,12 +306,13 @@ private fun closeDatabase() {
         banEntryDao = null
         databaseDoNotTryAgain = true
         databaseEnabled = false
-        dbTries = config.databaseSettings.databaseMaxRetries+1
+        dbTries = config.databaseSettings.databaseMaxRetries + 1
         globalDispatcher.close()
     } else {
         databaseDoNotTryAgain = true
     }
 }
+
 fun getDatabaseStatus(): String {
     var start = "Database Status: Database is "
     start += if (databaseEnabled) {
