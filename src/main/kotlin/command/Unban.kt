@@ -37,10 +37,11 @@ class Unban(private val jda: JDA) : Command() {
         event.channel.sendMessage("Unbanned ${user.asMention}").await()
         runSQLUntilMaxTries {
             val banEntryDao: Dao<BanEntry, Int> = getBanEntryDao()
-            val banEntries = banEntryDao.queryBuilder()
+            val query = banEntryDao.queryBuilder()
                 .where().eq("userId", userId)
                 .and()
-                .eq("guildId", guild.idLong).query()
+                .eq("guildId", guild.idLong).prepare()
+            val banEntries = banEntryDao.query(query)
             for (banEntry in banEntries) {
                 banEntryDao.delete(banEntry)
             }
