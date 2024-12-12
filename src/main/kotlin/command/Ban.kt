@@ -1,9 +1,10 @@
 package tech.trip_kun.sinon.command
 
 import com.j256.ormlite.dao.Dao
-import com.j256.ormlite.dao.GenericRawResults
 import dev.minn.jda.ktx.coroutines.await
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
@@ -21,8 +22,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 private val banCoroutineScope = CoroutineScope(getDispatcher())
 class Ban(private var jda: JDA): Command() {
-    private var timerTask: TimerTask
-    private val timer = Timer()
 
     init {
         val name = "ban"
@@ -41,14 +40,12 @@ class Ban(private var jda: JDA): Command() {
         )
         addArgument(Argument("reason", "The reason for the ban", false, ArgumentType.TEXT, null))
         initialize(jda)
-        timerTask = object : TimerTask() {
-            override fun run() {
-                banCoroutineScope.launch {
-                    handleBans()
-                }
+        banCoroutineScope.launch {
+            while (isActive) {
+                handleBans()
+                delay(60000)
             }
         }
-        timer.schedule(timerTask, 0, 60 * 1000)
     }
     private suspend fun handleBans() {
         var banEntryDao: Dao<BanEntry, Int>? = null
