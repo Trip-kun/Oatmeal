@@ -40,7 +40,7 @@ class Timeout(private val jda: JDA) : Command() {
         return CommandCategory.ESSENTIAL
     }
 
-    override fun handler(event: MessageReceivedEvent) {
+    override suspend fun handler(event: MessageReceivedEvent) {
         requireGuild(event)
         requireBotPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
         requireUserPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
@@ -64,7 +64,7 @@ class Timeout(private val jda: JDA) : Command() {
         event.channel.sendMessageEmbeds(embedBuilder.build()).queue()
     }
 
-    override fun handler(event: SlashCommandInteractionEvent) {
+    override suspend fun handler(event: SlashCommandInteractionEvent) {
         requireGuild(event)
         requireBotPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
         requireUserPermission(event, net.dv8tion.jda.api.Permission.MODERATE_MEMBERS)
