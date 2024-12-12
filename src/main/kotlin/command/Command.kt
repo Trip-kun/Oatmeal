@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
+import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.exception.CommandExitException
 import tech.trip_kun.sinon.exception.CommandInitializationException
 import tech.trip_kun.sinon.getConfig
@@ -43,6 +44,7 @@ abstract class Command {
         try {
             jda.upsertCommand(slashCommandData).complete() // We don't use await since this isn't a suspend fun. We don't want a suspend fun since this gets called from a constructor, and the performance benefit would be static anyway
         } catch (e: Exception) {
+            Logger.error("Failed to register command " + firstArgument.getName(), e)
             throw CommandInitializationException("Failed to register command " + firstArgument.getName())
         }
         category = getCategory()
