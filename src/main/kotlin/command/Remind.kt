@@ -42,7 +42,11 @@ class Remind(private val jda: JDA): Command() {
         initialize(jda)
         remindCoroutineScope.launch {
             while (true) {
-                handleReminders()
+                try {
+                    handleReminders()
+                } catch (e: Exception) {
+                   Logger.error("Reminder handling failed: ${e.message}", e) 
+                } 
                 kotlinx.coroutines.delay(30000)
             }
         }
