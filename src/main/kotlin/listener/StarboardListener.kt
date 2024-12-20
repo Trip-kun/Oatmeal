@@ -67,10 +67,14 @@ class StarboardListener @ListenerConstructor constructor(private val jda: JDA) :
 
 }
 
-private fun generateStarboardEmbeds(member: Member, count: Int, message: String): EmbedBuilder {
+private fun generateStarboardEmbeds(member: Member, count: Int, message: Message): EmbedBuilder {
     val embed = EmbedBuilder()
-    embed.setAuthor(member.user.asMention, null, member.user.effectiveAvatarUrl)
-    embed.setDescription(message)
+    embed.setAuthor(member.user.effectiveName, null, member.user.effectiveAvatarUrl)
+    embed.addField("Original Message", "[Jump to message](${message.jumpUrl})", false)
+    for (attachment in message.attachments) {
+        embed.setImage(attachment.url)
+    }
+    embed.setDescription(message.contentRaw)
     embed.setFooter("⭐ $count")
     return embed
 }
@@ -118,11 +122,11 @@ private suspend fun commonWork(guildJDA: net.dv8tion.jda.api.entities.Guild, mes
             }
         }
         if (starboardMessage == null) {
-            val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
+            val embed = generateStarboardEmbeds(message.member!!, count, message)
             starboardMessage = channel.sendMessageEmbeds(embed.build()).await()
             starboardEntry!!.starboardMessageId = starboardMessage.idLong
         } else {
-            val embed = generateStarboardEmbeds(message.member!!, count, message.contentRaw)
+            val embed = generateStarboardEmbeds(message.member!!, count, message)
             try {
                 starboardMessage.editMessageEmbeds(embed.build()).await()
             } catch (e: Exception) {
