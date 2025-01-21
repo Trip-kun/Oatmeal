@@ -41,4 +41,8 @@ tasks.named('shadowJar', ShadowJar) {
     archiveBaseName.set('oatmeal')
     archiveClassifier.set('')
     archiveVersion.set('')
+    mergeServiceFiles()
+    manifest {
+        attributes(["Main-Class": "tech.trip_kun.sinon.MainKt"])
+    }
 }
