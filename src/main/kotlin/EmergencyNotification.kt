@@ -22,7 +22,7 @@ data class EmergencyNotification(
 
 }
 
-private lateinit var notificationObject: Any
+private lateinit var notificationObject: Object
 
 private val emergencyNotificationPriorityQueue: PriorityBlockingQueue<EmergencyNotification> = PriorityBlockingQueue()
 private val jda = getJDA()
