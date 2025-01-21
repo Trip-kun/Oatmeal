@@ -8,7 +8,7 @@ FROM openjdk:21-slim
 RUN addgroup --system --gid 1001 app && \
     adduser --system --uid 1001 --gid 1001 app
 WORKDIR /app
-COPY --from=BUILD /build/build/libs/rsskt.jar rsskt.jar
+COPY --from=BUILD /build/build/libs/oatmeal.jar /app/oatmeal.jar
 RUN chown -R app:app /app
 WORKDIR /app/work
 USER app
