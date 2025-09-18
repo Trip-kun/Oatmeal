@@ -19,8 +19,9 @@ private var reminderDao: Dao<Reminder, Long>? = null
 private var banEntryDao: Dao<BanEntry, Int>? = null
 private var guildDao: Dao<Guild, Long>? = null
 private var starboardEntryDao: Dao<StarboardEntry, Long>? = null
+private var scoopEntryDao: Dao<ScoopEntry, Long>? = null
 private lateinit var databaseInfoDao: Dao<DatabaseInfo, Int>
-private val DATABASE_VERSION = 2
+private val DATABASE_VERSION = 3
 
 //Complete
 //Need to make a try-3-times method to use for all database calls
@@ -31,6 +32,7 @@ private val DATABASE_VERSION = 2
 // This is to ensure that the bot can still function without the database
 private var databaseEnabled = false
 val config = getConfig()
+@OptIn(ExperimentalCoroutinesApi::class)
 val globalDispatcher = newSingleThreadContext("GlobalDispatcher")
 
 class DatabaseException(message: String) : RuntimeException(message) {
@@ -164,6 +166,10 @@ private fun loadDatabase() {
         val starboardEntryDao2: Dao<StarboardEntry, Long> = DaoManager.createDao(connectionSource, StarboardEntry::class.java)
         starboardEntryDao2.setObjectCache(true)
         starboardEntryDao = starboardEntryDao2
+        TableUtils.createTableIfNotExists(connectionSource, ScoopEntry::class.java)
+        val scoopEntryDao2: Dao<ScoopEntry, Long> = DaoManager.createDao(connectionSource, ScoopEntry::class.java)
+        scoopEntryDao2.setObjectCache(true)
+        scoopEntryDao = scoopEntryDao2
         databaseEnabled = true
         dbTries = 0
     } catch (e: SQLException) {
@@ -228,6 +234,15 @@ fun getStarboardEntryDao(): Dao<StarboardEntry, Long> {
     }
     return starboardEntryDao!!
 }
+fun getScoopEntryDao(): Dao<ScoopEntry, Long> {
+    if (!databaseEnabled && !databaseDoNotTryAgain) {
+        runSQLUntilMaxTries { loadDatabase() }
+    }
+    if (scoopEntryDao == null) {
+        throw DatabaseException("ScoopEntry DAO is null")
+    }
+    return scoopEntryDao!!
+}
 private fun upgrade(startVersion: Int, endVersion: Int) {
     if (startVersion < endVersion) {
         when (startVersion) {
@@ -236,7 +251,22 @@ private fun upgrade(startVersion: Int, endVersion: Int) {
                 // There are no modifications to the database schema between version 1 and version 2, just additions of new tables
             }
             2 -> {
-                // Next upgrade, not yet implemented
+                // Add scoopChannelId column to guilds (default 0, non-null)
+                try {
+                    databaseInfoDao.executeRawNoArgs(
+                        "ALTER TABLE guilds ADD COLUMN scoopChannelId BIGINT NOT NULL DEFAULT 0"
+                    )
+                } catch (e: SQLException) {
+                    // Ignore if the column already exists
+                    if (!e.message.orEmpty().contains("Duplicate column name", ignoreCase = true)) {
+                        addEmergencyNotification(EmergencyNotification("Migration Error", 10, e.stackTraceToString()))
+                        throw e
+                    }
+                }
+                // scoop_entries table is created by TableUtils below via entity annotations.
+            }
+            3 -> {
+                // Not yet implemented
             }
         }
         upgrade(startVersion + 1, endVersion)
@@ -244,7 +274,7 @@ private fun upgrade(startVersion: Int, endVersion: Int) {
 }
 
 
-private suspend fun reloadDatabase() {
+private suspend fun reloadDatabase()  {
     if (databaseDoNotTryAgain || dbTries >= config.databaseSettings.databaseMaxRetries) {
         return
     }
@@ -304,6 +334,9 @@ private fun closeDatabase() {
         userDao = null
         reminderDao = null
         banEntryDao = null
+        guildDao = null
+        starboardEntryDao = null
+        scoopEntryDao = null
         databaseDoNotTryAgain = true
         databaseEnabled = false
         dbTries = config.databaseSettings.databaseMaxRetries + 1
