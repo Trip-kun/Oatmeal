@@ -251,7 +251,19 @@ private fun upgrade(startVersion: Int, endVersion: Int) {
                 // There are no modifications to the database schema between version 1 and version 2, just additions of new tables
             }
             2 -> {
-                // Just new tables.
+                // Add scoopChannelId column to guilds (default 0, non-null)
+                try {
+                    databaseInfoDao.executeRawNoArgs(
+                        "ALTER TABLE guilds ADD COLUMN scoopChannelId BIGINT NOT NULL DEFAULT 0"
+                    )
+                } catch (e: SQLException) {
+                    // Ignore if the column already exists
+                    if (!e.message.orEmpty().contains("Duplicate column name", ignoreCase = true)) {
+                        addEmergencyNotification(EmergencyNotification("Migration Error", 10, e.stackTraceToString()))
+                        throw e
+                    }
+                }
+                // scoop_entries table is created by TableUtils below via entity annotations.
             }
             3 -> {
                 // Not yet implemented

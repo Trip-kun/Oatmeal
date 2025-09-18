@@ -1,5 +1,6 @@
 package tech.trip_kun.sinon.data.entity
 
+import com.j256.ormlite.field.DataType
 import com.j256.ormlite.field.DatabaseField
 import com.j256.ormlite.field.ForeignCollectionField
 import com.j256.ormlite.table.DatabaseTable
@@ -43,8 +44,8 @@ class StarboardEntry(
 @ReflectionNoArg
 @DatabaseTable(tableName = "scoop_entries")
 class ScoopEntry(
-    @DatabaseField(foreign = true, canBeNull = false) var guild: Guild,
+    @DatabaseField(foreign = true, canBeNull = false, uniqueCombo=true, index=true) var guild: Guild,
     @DatabaseField(canBeNull = false, id = true) var messageId: Long,
     @DatabaseField(canBeNull = false) var channelId: Long,
-    @DatabaseField(canBeNull = false) var messageLink: String
+    @DatabaseField(canBeNull = false, uniqueCombo=true, dataType = DataType.LONG_STRING) var messageLink: String
 )
