@@ -334,6 +334,9 @@ private fun closeDatabase() {
         userDao = null
         reminderDao = null
         banEntryDao = null
+        guildDao = null
+        starboardEntryDao = null
+        scoopEntryDao = null
         databaseDoNotTryAgain = true
         databaseEnabled = false
         dbTries = config.databaseSettings.databaseMaxRetries + 1

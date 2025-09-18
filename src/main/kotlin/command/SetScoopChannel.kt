@@ -59,7 +59,7 @@ class SetScoopChannel(private val jda: JDA) : Command() {
         var guilds: List<Guild>? = null
         runSQLUntilMaxTries { guilds = guildDao?.queryBuilder()?.where()?.ne("scoopChannelId", 0)?.query()}
         val guildsJDA: ArrayList<net.dv8tion.jda.api.entities.Guild> = ArrayList()
-        for (guild in jda.guilds) {
+        for (guild in guilds!!) {
             val guildJDA = jda.getGuildById(guild.id)
             if (guildJDA != null) {
                 guildsJDA.add(guildJDA)

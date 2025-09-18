@@ -44,8 +44,8 @@ class StarboardEntry(
 @ReflectionNoArg
 @DatabaseTable(tableName = "scoop_entries")
 class ScoopEntry(
-    @DatabaseField(foreign = true, canBeNull = false, uniqueCombo=true, index=true) var guild: Guild,
+    @DatabaseField(foreign = true, canBeNull = false) var guild: Guild,
     @DatabaseField(canBeNull = false, id = true) var messageId: Long,
     @DatabaseField(canBeNull = false) var channelId: Long,
-    @DatabaseField(canBeNull = false, uniqueCombo=true, dataType = DataType.LONG_STRING) var messageLink: String
+    @DatabaseField(canBeNull = false, dataType = DataType.LONG_STRING) var messageLink: String
 )
