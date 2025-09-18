@@ -15,10 +15,16 @@ class Guild(@DatabaseField(id = true) var id: Long) {
     var starboardChannelId: Long = 0
 
     @DatabaseField(canBeNull = false)
+    var scoopChannelId: Long = 0
+
+    @DatabaseField(canBeNull = false)
     var starboardLimit: Int = 3 // Default to 3 stars needed to go to starboard
 
     @ForeignCollectionField(eager = true)
     var starboardEntries: Collection<StarboardEntry> = mutableListOf()
+
+    @ForeignCollectionField(eager = true)
+    var scoopEntries: Collection<ScoopEntry> = mutableListOf()
 }
 
 
@@ -34,3 +40,11 @@ class StarboardEntry(
     var starboardMessageId: Long = 0 // The corresponding message in the starboard
 
 }
+@ReflectionNoArg
+@DatabaseTable(tableName = "scoop_entries")
+class ScoopEntry(
+    @DatabaseField(foreign = true, canBeNull = false) var guild: Guild,
+    @DatabaseField(canBeNull = false, id = true) var messageId: Long,
+    @DatabaseField(canBeNull = false) var channelId: Long,
+    @DatabaseField(canBeNull = false) var messageLink: String
+)
