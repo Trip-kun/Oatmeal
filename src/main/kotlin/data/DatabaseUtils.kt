@@ -133,7 +133,7 @@ private fun loadDatabase() {
         connectionSource.initialize()
         TableUtils.createTableIfNotExists(connectionSource, DatabaseInfo::class.java)
         databaseInfoDao = DaoManager.createDao(connectionSource, DatabaseInfo::class.java)
-        val databaseInfo = databaseInfoDao.queryForId(0)
+        val databaseInfo = databaseInfoDao.queryForId(3)
         if (databaseInfo == null) {
             val newDatabaseInfo = DatabaseInfo()
             newDatabaseInfo.currentVersion = DATABASE_VERSION

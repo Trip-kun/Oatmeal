@@ -7,7 +7,7 @@ import tech.trip_kun.sinon.annotation.ReflectionNoArg
 @ReflectionNoArg
 @DatabaseTable(tableName = "database_info")
 class DatabaseInfo {
-    @DatabaseField(generatedId = true)
+    @DatabaseField(generatedId = false)
     var id: Int = 0
 
     @DatabaseField(canBeNull = false)
