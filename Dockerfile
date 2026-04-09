@@ -4,7 +4,7 @@ COPY --chown=gradle:gradle src /build/src
 COPY --chown=gradle:gradle build.gradle settings.gradle /build/
 RUN gradle --no-daemon shadowJar
 
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jre-alpine
 RUN addgroup --system --gid 1001 app && \
     adduser --system --uid 1001 --gid 1001 app
 WORKDIR /app
