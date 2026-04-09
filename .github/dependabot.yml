@@ -6,15 +6,34 @@
 version: 2
 updates:
   # Monitor the master branch
-  - package-ecosystem: "gradle"
+  - package-ecosystem: "gradle" # or "docker", "pip", etc.
     directory: "/"
-    schedule:
-      interval: "daily"
     target-branch: "master"
-
-  # Monitor the staging branch
-  - package-ecosystem: "gradle"
-    directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    # 👇 Add this section to group updates
+    groups:
+      all-dependencies:
+        patterns:
+          - "*" # Groups ALL dependencies in this ecosystem into one PR
+      production-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production" # Groups only production deps
+        
+  # Monitor the staging branch
+  - package-ecosystem: "gradle" # or "docker", "pip", etc.
+    directory: "/"
     target-branch: "staging"
+    schedule:
+      interval: "weekly"
+    # 👇 Add this section to group updates
+    groups:
+      all-dependencies:
+        patterns:
+          - "*" # Groups ALL dependencies in this ecosystem into one PR
+      production-dependencies:
+        patterns:
+          - "*"
+        dependency-type: "production" # Groups only production deps
+        
