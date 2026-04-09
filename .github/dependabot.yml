@@ -5,7 +5,16 @@
 
 version: 2
 updates:
-  - package-ecosystem: "gradle" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Monitor the master branch
+  - package-ecosystem: "gradle"
+    directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "daily"
+    target-branch: "master"
+
+  # Monitor the staging branch
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "staging"
