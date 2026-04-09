@@ -8,7 +8,6 @@ import kotlinx.coroutines.launch
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import org.apache.commons.logging.Log
 import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.data.entity.Reminder
 import tech.trip_kun.sinon.data.entity.User
