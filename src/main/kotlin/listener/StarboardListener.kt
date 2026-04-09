@@ -26,7 +26,6 @@ import tech.trip_kun.sinon.data.getGuildDao
 import tech.trip_kun.sinon.data.getStarboardEntryDao
 import tech.trip_kun.sinon.data.runSQLUntilMaxTries
 
-
 private val starboardListenerCoroutineScope = CoroutineScope(getDispatcher())
 
 @ListenerClass
