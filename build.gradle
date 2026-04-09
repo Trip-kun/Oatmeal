@@ -25,7 +25,7 @@ dependencies {
     implementation "com.j256.ormlite:ormlite-core:6.1"
     implementation "com.j256.ormlite:ormlite-jdbc:6.1"
     implementation "org.mariadb.jdbc:mariadb-java-client:3.1.3"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:2.0.20"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:2.3.20"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0"
     implementation("club.minnced:jda-ktx:0.12.0")
     implementation 'org.jsoup:jsoup:1.17.2'
