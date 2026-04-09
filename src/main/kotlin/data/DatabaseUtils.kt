@@ -87,6 +87,7 @@ private fun blockingRunSQLUntilMaxTries(action: () -> Unit): DatabaseException? 
                             "Failed to run SQL after $tries tries",
                             1,
                             e.stackTraceToString()
+
                         )
 
                     )
