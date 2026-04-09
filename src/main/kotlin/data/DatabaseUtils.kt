@@ -50,6 +50,7 @@ private var dbTries = 0
 private var databaseDoNotTryAgain = false
 private var makeDatabaseJob: Job? = null
 private var isJobLaunched = false
+@OptIn(ExperimentalCoroutinesApi::class)
 private fun blockingRunSQLUntilMaxTries(action: () -> Unit): DatabaseException? {
     try {
         if (databaseDoNotTryAgain) {

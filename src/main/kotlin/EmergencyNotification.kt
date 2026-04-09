@@ -1,8 +1,6 @@
 package tech.trip_kun.sinon
 
 import net.dv8tion.jda.api.utils.FileUpload
-import okhttp3.internal.notify
-import okhttp3.internal.wait
 import java.util.concurrent.PriorityBlockingQueue
 
 // This system will be used to send emergency notifications to admins.
