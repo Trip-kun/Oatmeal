@@ -13,7 +13,7 @@ updates:
     target-branch: "master"
 
   # Monitor the staging branch
-  - package-ecosystem: "npm"
+  - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "daily"
