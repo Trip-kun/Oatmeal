@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.requests.GatewayIntent.*
-import org.apache.commons.logging.Log
 import tech.trip_kun.sinon.Logger
 import tech.trip_kun.sinon.annotations.ListenerClass
 import tech.trip_kun.sinon.annotations.ListenerConstructor
