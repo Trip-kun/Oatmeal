@@ -17,7 +17,7 @@ noArg {
 }
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0'
     implementation 'ch.qos.logback:logback-classic:1.5.32'
     implementation 'org.slf4j:slf4j-api:2.0.17'
     implementation 'org.reflections:reflections:0.10.2'
@@ -28,9 +28,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-reflect:2.3.20"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
     implementation("club.minnced:jda-ktx:0.14.2")
-    implementation 'org.jsoup:jsoup:1.22.1'
-    implementation "io.ktor:ktor-client-core:3.4.2"
-    implementation "io.ktor:ktor-client-cio:3.4.2"
+    implementation 'org.jsoup:jsoup:1.22.2'
+    implementation "io.ktor:ktor-client-core:3.4.3"
+    implementation "io.ktor:ktor-client-cio:3.4.3"
 }
 
 
