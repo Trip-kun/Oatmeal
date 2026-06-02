@@ -5,8 +5,8 @@ COPY --chown=gradle:gradle build.gradle settings.gradle /build/
 RUN gradle --no-daemon shadowJar
 
 FROM eclipse-temurin:21-jre-alpine
-RUN addgroup --system --gid 1001 app && \
-    adduser --system --uid 1001 --gid 1001 app
+RUN addgroup -S -g 1001 app && \
+    adduser -S -u 1001 -G app app
 WORKDIR /app
 COPY --from=BUILD /build/build/libs/oatmeal.jar /app/oatmeal.jar
 RUN chown -R app:app /app
