@@ -1,9 +1,9 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
-    id 'com.gradleup.shadow' version '9.4.2'
-    id 'org.jetbrains.kotlin.jvm' version '2.4.0'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.4.0'
-    id "org.jetbrains.kotlin.plugin.noarg" version "2.4.0"
+    id 'com.gradleup.shadow' version '9.5.1'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.10'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.4.10'
+    id "org.jetbrains.kotlin.plugin.noarg" version "2.4.10"
 }
 
 group = 'tech.trip_kun'
@@ -18,19 +18,19 @@ noArg {
 dependencies {
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0'
-    implementation 'ch.qos.logback:logback-classic:1.5.34'
+    implementation 'ch.qos.logback:logback-classic:1.5.38'
     implementation 'org.slf4j:slf4j-api:2.0.18'
     implementation 'org.reflections:reflections:0.10.2'
-    implementation "net.dv8tion:JDA:6.4.1"
+    implementation "net.dv8tion:JDA:6.5.0"
     implementation "com.j256.ormlite:ormlite-core:6.1"
     implementation "com.j256.ormlite:ormlite-jdbc:6.1"
-    implementation "org.mariadb.jdbc:mariadb-java-client:3.5.8"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:2.4.0"
+    implementation "org.mariadb.jdbc:mariadb-java-client:3.5.9"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:2.4.10"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0"
-    implementation("club.minnced:jda-ktx:0.14.2")
+    implementation("club.minnced:jda-ktx:0.15.0")
     implementation 'org.jsoup:jsoup:1.22.2'
-    implementation "io.ktor:ktor-client-core:3.5.0"
-    implementation "io.ktor:ktor-client-cio:3.5.0"
+    implementation "io.ktor:ktor-client-core:3.5.1"
+    implementation "io.ktor:ktor-client-cio:3.5.1"
 }
 
 
