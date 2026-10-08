@@ -100,9 +100,7 @@ class CommandListener @ListenerConstructor constructor(private val jda: JDA) : L
                 if (commands.containsKey(command)) {
                     try {
                         event.deferReply().await()
-                        commandListenerCoroutineScope.launch {
-                            commands[command]!!.handler(event)
-                        }
+                        commands[command]!!.handler(event)
                     } catch (e: CommandExitException) {
                         event.hook.sendMessage(e.message!!).await()
                     } catch (e: Exception) {
